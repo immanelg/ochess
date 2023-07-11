@@ -1,0 +1,28 @@
+{
+  "name": "ochess",
+  "version": "1.0.0",
+  "description": "",
+  "main": "ui/index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "jest",
+    "build": "esbuild ui/index.js --bundle --outfile=static/bundle.js",
+    "watch": "esbuild ui/index.js --bundle --outfile=static/bundle.js --watch",
+    "fmt": "npx prettier ui/ --write"
+  },
+  "keywords": [
+    "chess"
+  ],
+  "author": "immanelg",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "chessground": "^8.3.12",
+    "esbuild": "0.18.11",
+    "mithril": "^2.2.2"
+  },
+  "devDependencies": {
+    "prettier": "3.0.0"
+  }
+}

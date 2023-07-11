@@ -1,0 +1,58 @@
+[project]
+name = "ochess"
+version = "2.0.0"
+description = ""
+authors = [
+    { name = "immanelg" },
+]
+dependencies = [
+    "asyncpg>=0.27.0",
+    "sqlalchemy>=2.0.17",
+    "broadcaster>=0.2.0",
+    "jinja2>=3.1.2",
+    "pydantic>=1.10.9",
+    "alembic>=1.11.1",
+    "uvicorn[standard]>=0.22.0",
+    "starlette>=0.28.0",
+    "itsdangerous>=2.1.2",
+    "chess>=1.9.4",
+]
+requires-python = ">=3.11"
+license = {text = "GPL-3.0"}
+
+[tool.setuptools]
+py-modules = []
+
+[tool.pdm.scripts]
+serve-dev = "uvicorn app.main:app --reload --host 127.0.0.1 --port 8000 {args}"
+migrate = "alembic revision --autogenerate {args}"
+downgrade = "alembic downgrade {args}"
+upgrade = "alembic upgrade head"
+fmt.composite = ["black app/", "ruff app/ --fix"]
+lint = "ruff check app/"
+test = "pytest tests/"
+
+[tool.pdm.dev-dependencies]
+test = [
+    "pytest>=7.4.0",
+    "pytest-env>=0.8.2",
+    "pytest-asyncio>=0.21.0",
+    "async-asgi-testclient>=1.4.11",
+]
+lint = [
+    "ruff>=0.0.275",
+    "black>=23.3.0",
+]
+
+[tool.ruff]
+select = [
+    "E",  
+    "W",  
+    "F",  
+    "I",  
+]
+
+[tool.pyright]
+exclude =  [ ".venv" ]
+venvPath = "."
+venv = ".venv"
