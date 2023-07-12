@@ -44,7 +44,10 @@ class BaseDispatcher:
         try:
             await handler()
         except ValidationError as error:
-            await self.ws.send_json({"action": "error", "data": error.errors(include_url=False)})
+            await self.send_error(error)
+
+    async def send_error(self, error) -> None:
+        await self.ws.send_json({"action": "error", "data": error.errors(include_url=False)})
 
 
     async def handle_invalid_message(self):
