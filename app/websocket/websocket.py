@@ -5,7 +5,7 @@ from starlette.websockets import WebSocket
 
 from app.database.database import get_session
 from app.resources import broadcast
-from app.websocket.dispatch import Dispatcher
+from app.websocket.dispatch import LobbyDispatcher, GameDispatcher
 
 
 async def websocket_listener(ws: WebSocket) -> None:
@@ -38,7 +38,10 @@ async def _websocket_receiver(ws: WebSocket) -> None:
         msg = typing.cast(dict[str, typing.Any], msg)
         action = msg.get("action", "")
         data = msg.get("data", {})
+        room: int | typing.Literal["lobby"] = ws.path_params.get("game_id", "lobby")
 
         async with get_session() as session:
-            # if ws.session.get("game_id") == "lobby": await LobbyDispatcher...
-            await Dispatcher(session, ws, action, data).dispatch()
+            if room == "lobby":
+                await LobbyDispatcher(session, ws, action, data).dispatch()
+            else:
+                await GameDispatcher(session, ws, action, data, room).dispatch()

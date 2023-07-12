@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Awaitable, Callable, Literal
+from typing import Any, Awaitable, Callable, Literal, TypeAlias
 
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,32 +11,19 @@ from app.resources import broadcast
 from app.validation import validated_json
 
 # refactor:
-
-# class AbstractDispatcher:
-#     ws: WebSocket
-#     action: str
-#     data: dict[str, typing.Any]
-#     room: str
-#     user: User
-#     session: AsyncSession
-#     handlers: dict[str, Handler]
-
-# class LobbyDispatcher(AbstractDispatcher):
-#     ...
-
-# class GameDispatcher(AbstractDispatcher):
-#     ...
+Handler: TypeAlias = Callable[[], Awaitable[None]]
 
 
-class Dispatcher:
+class BaseDispatcher:
     """Dispatches event sent by WS client."""
 
     ws: WebSocket
     action: str
     data: dict[str, Any]
-    room: int | Literal["lobby"]
+    room: Any
     user_id: int
     session: AsyncSession
+    handlers: dict[str, Handler]
 
     def __init__(
         self,
@@ -49,42 +36,35 @@ class Dispatcher:
         self.ws = ws
         self.action = action
         self.data = data
-        # TODO: refactor
-        room = ws.path_params.get("game_id", "lobby")
-        self.room = int(room) if room != "lobby" else "lobby"
+        # TODO: better auth
         self.user_id = int(self.ws.cookies.get("user_id", ""))
         assert self.user_id is not None
 
-    async def dispatch(self) -> None:
-        handlers = {
-            "ping": self.ping,
-            # lobby-only
-            "create-invite": self.create_invite,
-            "accept-invite": self.accept_invite,
-            "cancel-invite": self.cancel_invite,
-            # game-only
-            "make-move": self.make_move, # sends GameData
-            "connect-to-game": self.connect_to_game, # sends GameData
-            "resign": self.resign, # sends GameData
-        }
 
-        handler: Callable[[], Awaitable[None]] = (
-            handlers.get(self.action) or self.handle_invalid_message
-        )
+    async def dispatch(self) -> None:
+        handler: Callable[[], Awaitable[None]] = self.handlers.get(self.action) or self.handle_invalid_message
         try:
             await handler()
         except ValidationError as error:
-            await self.ws.send_json({"action": "error", "data": error.json()})
+            await self.ws.send_json({"action": "error", "data": error.errors(include_url=False)})
 
-    async def ping(self):
-        await asyncio.sleep(1)
+
+    async def handle_invalid_message(self):
         await self.ws.send_json(
-            {
-                "action": "ping",
-            }
+            {"action": "error", "data": {"detail": "unknown action " + self.action}}
         )
 
-    # TODO: extract this boilerplate with pydantic models
+
+class LobbyDispatcher(BaseDispatcher):
+    def __init__(self, session: AsyncSession, ws: WebSocket, action: str, data: dict[str, Any]) -> None:
+        super().__init__(session, ws, action, data)
+        self.room = "lobby"
+
+        self.handlers = {
+            "create-invite": self.create_invite,
+            "accept-invite": self.accept_invite,
+            "cancel-invite": self.cancel_invite,
+        }
 
     async def create_invite(self):
         data_schema = schemas.CreateInviteDataReceive(**self.data)
@@ -146,6 +126,20 @@ class Dispatcher:
 
         await broadcast.publish(channel="lobby", message=response)
 
+class GameDispatcher(BaseDispatcher):
+
+    def __init__(self, session: AsyncSession, ws: WebSocket, action: str, data: dict[str, Any], game_id: int) -> None:
+        super().__init__(session, ws, action, data)
+        self.room = game_id
+
+        self.handlers = {
+            "make-move": self.make_move, 
+            "connect-to-game": self.connect_to_game,
+            "resign": self.resign, 
+        }
+
+    # TODO: extract this boilerplate with pydantic models
+
     async def make_move(self):
         data_schema = schemas.MakeNewMoveDataReceive(**self.data)
 
@@ -203,9 +197,4 @@ class Dispatcher:
         await broadcast.publish(
             channel=str(game_id),
             message=response,
-        )
-
-    async def handle_invalid_message(self):
-        await self.ws.send_json(
-            {"action": "error", "data": {"detail": "unknown action " + self.action}}
         )
