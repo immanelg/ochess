@@ -12,7 +12,6 @@ export class WSClient {
   };
 
   connect() {
-    delete this.ws;
     this.ws = new WebSocket(this.url);
 
     this.ws.onopen = event => {

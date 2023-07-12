@@ -38,10 +38,12 @@ export default function Game() {
     const handler =
       {
         game: onGameUpdate,
-        error: () => console.error(`Server sent unknown action ${action}`),
+        error: () => console.error(`Server sent error ${data}`);
       }[action] ??
-      function () {
-        console.error(`Server sent unknown action ${action} with data ${data}`);
+      function() {
+        console.error(
+          `Server sent unknown action in message to lobby: ${{ action, data }}`,
+        );
       };
     handler(data);
     m.redraw();
@@ -61,10 +63,17 @@ export default function Game() {
       turnColor: turn(state.game),
       fen: state.game.position.fen,
       movable: {
-        free: true,
+        free: true, // TODO: request dests and set them
         color: turn(state.game),
       },
     });
+    if (state.game.status !== "playing") {
+      state.cg.set({
+        movable: {
+          free: false,
+        }
+      })
+    }
   }
 
   function onMyMove(orig, dest) {

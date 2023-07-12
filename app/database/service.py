@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-# TODO: refactor this module into DB Service class
 import chess
 from sqlalchemy.ext.asyncio import AsyncSession
 
