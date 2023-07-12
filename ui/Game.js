@@ -17,7 +17,7 @@ export default function Game() {
     game: {
       id: m.route.param("gameId"),
     },
-    color: "white",
+    color: null,
     /** @type {import("chessground/api").Api | null} */
     cg: null,
   };
@@ -38,9 +38,8 @@ export default function Game() {
     const handler =
       {
         game: onGameUpdate,
-        error: () => console.error(`Server sent error ${data}`);
-      }[action] ??
-      function() {
+        error: () => console.error(`Server sent error ${data}`),
+      }[action] ?? function() {
         console.error(
           `Server sent unknown action in message to lobby: ${{ action, data }}`,
         );
@@ -110,8 +109,6 @@ export default function Game() {
       m("section.blue.merida", m("div.cg-wrap", { oncreate: init })),
       m("p", "White: ", state.game.white_id),
       m("p", "Black: ", state.game.black_id),
-      m("p", "Status: ", state.game.status),
-      m("p", "Moves: ", state.game.position.moves),
     ],
   };
 }
