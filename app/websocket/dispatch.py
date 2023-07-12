@@ -13,6 +13,7 @@ Handler: TypeAlias = Callable[[], Awaitable[None]]
 
 # TODO: reduce boilerblate for validation
 
+
 class BaseDispatcher:
     """Dispatches event sent by WS client."""
 
@@ -38,17 +39,19 @@ class BaseDispatcher:
         self.user_id = int(self.ws.cookies.get("user_id", ""))
         assert self.user_id is not None
 
-
     async def dispatch(self) -> None:
-        handler: Callable[[], Awaitable[None]] = self.handlers.get(self.action) or self.handle_invalid_message
+        handler: Callable[[], Awaitable[None]] = (
+            self.handlers.get(self.action) or self.handle_invalid_message
+        )
         try:
             await handler()
         except ValidationError as error:
             await self.send_error(error)
 
     async def send_error(self, error) -> None:
-        await self.ws.send_json({"action": "error", "data": error.errors(include_url=False)})
-
+        await self.ws.send_json(
+            {"action": "error", "data": error.errors(include_url=False)}
+        )
 
     async def handle_invalid_message(self):
         await self.ws.send_json(
@@ -57,7 +60,9 @@ class BaseDispatcher:
 
 
 class LobbyDispatcher(BaseDispatcher):
-    def __init__(self, session: AsyncSession, ws: WebSocket, action: str, data: dict[str, Any]) -> None:
+    def __init__(
+        self, session: AsyncSession, ws: WebSocket, action: str, data: dict[str, Any]
+    ) -> None:
         super().__init__(session, ws, action, data)
 
         self.handlers = {
@@ -125,23 +130,32 @@ class LobbyDispatcher(BaseDispatcher):
 
         await broadcast.publish(channel="lobby", message=response)
 
-class GameDispatcher(BaseDispatcher):
 
-    def __init__(self, session: AsyncSession, ws: WebSocket, action: str, data: dict[str, Any], game_id: int) -> None:
+class GameDispatcher(BaseDispatcher):
+    def __init__(
+        self,
+        session: AsyncSession,
+        ws: WebSocket,
+        action: str,
+        data: dict[str, Any],
+        game_id: int,
+    ) -> None:
         super().__init__(session, ws, action, data)
         self.game_id = game_id
         self.game_repo = GameRepository(self.session)
 
         self.handlers = {
-            "make-move": self.make_move, 
+            "make-move": self.make_move,
             "connect-to-game": self.connect_to_game,
-            "resign": self.resign, 
+            "resign": self.resign,
         }
 
     async def make_move(self):
         data_schema = schemas.MakeNewMoveDataReceive(**self.data)
 
-        game_orm = await self.game_repo.make_move(self.user_id, self.game_id, data_schema)
+        game_orm = await self.game_repo.make_move(
+            self.user_id, self.game_id, data_schema
+        )
         data = validated_json(
             {
                 "game": game_orm,
