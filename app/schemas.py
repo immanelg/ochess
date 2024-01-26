@@ -88,7 +88,23 @@ class CancelGameResponse(BaseSchema):
     game_id: int
 
 
+class GetWaitingGamesRequest(BaseSchema):
+    type: Literal["get_waiting_games"]
+
+
+class GetWaitingGamesResponse(BaseSchema):
+    type: Literal["get_waiting_games"]
+    games: list[_WaitingGame]
+
+
+class _WaitingGame(BaseSchema):
+    white_id: int | None
+    black_id: int | None
+    game_id: int
+
+
 # game channels
+
 
 class MakeMoveRequest(BaseSchema):
     type: Literal["make_move"]

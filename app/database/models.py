@@ -49,8 +49,9 @@ class Game(Base, _Id):
 
     fen: Mapped[str] = mapped_column(default=STARTING_FEN)
     moves: Mapped[list[Move]] = relationship(
-        lazy="selectin", cascade="all, delete-orphan", 
-    ) 
+        lazy="selectin",
+        cascade="all, delete-orphan",
+    )
     # clock
 
 

@@ -19,8 +19,9 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 
 @pytest_asyncio.fixture(autouse=True, scope="session")
 async def setup_database():
-    # TODO: use alembic 
+    # TODO: use alembic
     from app.database.models import Base
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -45,6 +46,6 @@ async def client() -> AsyncGenerator[TestClient, None]:
 @pytest_asyncio.fixture(scope="session")
 async def session() -> AsyncGenerator[AsyncSession, None]:
     from app.database.database import get_session
+
     async with get_session() as session:
         yield session
-

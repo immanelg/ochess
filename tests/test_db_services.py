@@ -7,6 +7,7 @@ from app.database import service
 from app.database import models
 from app import schemas
 
+
 @pytest.mark.asyncio
 async def test_database_service(session: AsyncSession) -> None:
     # TODO: separate to unit tests instead of doing it all in one big run?
@@ -15,14 +16,22 @@ async def test_database_service(session: AsyncSession) -> None:
     user_1 = await user_repo.create()
     user_2 = await user_repo.create()
 
-    game = await game_repo.create_game(user_1.id, schemas.CreateGameRequest(type="create_game", white=True))
+    game = await game_repo.create_game(
+        user_1.id, schemas.CreateGameRequest(type="create_game", white=True)
+    )
     assert game.white_id == user_1.id
     assert game.stage == Stage.waiting
-    game = await game_repo.accept_game(user_2.id, schemas.AcceptGameRequest(type="accept_game", game_id=game.id))
+    game = await game_repo.accept_game(
+        user_2.id, schemas.AcceptGameRequest(type="accept_game", game_id=game.id)
+    )
 
     await session.refresh(game)
-    game = await game_repo.make_move(user_1.id, game.id, schemas.MakeMoveRequest(type="make_move", move="e2e4"))
-    game = await game_repo.make_move(user_2.id, game.id, schemas.MakeMoveRequest(type="make_move", move="c7c5"))
+    game = await game_repo.make_move(
+        user_1.id, game.id, schemas.MakeMoveRequest(type="make_move", move="e2e4")
+    )
+    game = await game_repo.make_move(
+        user_2.id, game.id, schemas.MakeMoveRequest(type="make_move", move="c7c5")
+    )
     game = await session.get(models.Game, game.id)
     assert game is not None
     assert game.stage == Stage.playing
@@ -37,5 +46,3 @@ async def test_database_service(session: AsyncSession) -> None:
     assert game.stage == Stage.ended
     assert game.result == Result.resign
     assert game.winner == Color.white
-
-

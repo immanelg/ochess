@@ -5,6 +5,7 @@ from app.database import models
 
 # TODO: refactor logic somehow somewhere
 
+
 def try_move(game: models.Game, move: str, white: bool) -> models.Game:
     """Validates move and returns mutated ORM model or raises an exception."""
     current_ply = len(game.moves)

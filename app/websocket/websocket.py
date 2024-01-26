@@ -40,6 +40,7 @@ def get_client(socket: WebSocket) -> Client | None:
         return GameClient(socket=socket, game_id=game_id)
     return LobbyClient(socket=socket)
 
+
 async def _websocket_receiver(ws: WebSocket) -> None:
     """Receive json data from clients"""
 
