@@ -19,8 +19,8 @@ cp example.env .env
 pdm sync
 
 # Run database migrations (via `alembic`)
-pdm run migrate -m "init"
-pdm run upgrade
+pdm run migrate-db -m "init"
+pdm run upgrade-db
 
 # Install Node dependencies
 npm install

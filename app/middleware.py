@@ -15,7 +15,7 @@ class UserIdMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         if user_id is None:
             async with get_session() as session:
-                user = await service.UserRepository(session).create()
+                user = await service.UserService(session).create()
             response.set_cookie("user_id", str(user.id))
 
         return response

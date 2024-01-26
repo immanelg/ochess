@@ -4,16 +4,16 @@ import chess
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import chess_service, schemas
-from app.constants import GameStatus
+from app.constants import Color, Result, Stage
 from app.database import models
 
 
-class AbstractRepository:
+class BaseService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
 
-class UserRepository(AbstractRepository):
+class UserService(BaseService):
     # TODO: this is dummy implementation that is only used in dummy middleware
     async def create(self):
         user = models.User()
@@ -22,7 +22,9 @@ class UserRepository(AbstractRepository):
         return user
 
 
-class GameRepository(AbstractRepository):
+# TODO! return errors instead of assertions.
+
+class GameService(BaseService):
     async def create_game(
         self,
         user_id: int,
@@ -31,45 +33,41 @@ class GameRepository(AbstractRepository):
         game = models.Game(
             white_id=user_id if data.white else None,
             black_id=user_id if not data.white else None,
-            status=GameStatus.waiting,
-            position=models.Position(
-                moves=[],
-            ),
         )
         self.session.add(game)
         await self.session.commit()
         return game
 
-    async def accept_invite(
+    async def accept_game(
         self,
         user_id: int,
         data: schemas.AcceptInviteDataReceive,
     ) -> models.Game:
         game_id = data.game_id
         game = await self.session.get(models.Game, game_id)
-        # TODO: handle these checks and send errors back
-        assert game is not None, "game doesnt exist"
-        assert game.status == GameStatus.waiting, "game is already playing"
+        assert game is not None, "game doesn't exist"
+        assert game.stage == Stage.waiting, "game is already playing"
         assert user_id not in {
             game.white_id,
             game.black_id,
         }, "cannot accept your own invite"
+        assert game.black_id is not None or game.white_id is not None, "invalid game state: both players are null"
+        assert game.black_id is None or game.white_id is None, "accepted invite, but game already playing"
         if game.black_id is None:
             game.black_id = user_id
         elif game.white_id is None:
             game.white_id = user_id
-        # else request was too late?
         await self.session.commit()
         return game
 
-    async def cancel_invite(
+    async def cancel_game(
         self,
         user_id: int,
         data: schemas.CancelInviteDataReceive,
     ) -> models.Game:
         game = await self.session.get(models.Game, data.game_id)
         assert game is not None, "game doesnt exist"
-        assert game.status == GameStatus.waiting, "game is already playing"
+        assert game.stage == Stage.waiting, "game is already playing"
         assert user_id in {
             game.white_id,
             game.black_id,
@@ -85,10 +83,11 @@ class GameRepository(AbstractRepository):
         data: schemas.MakeNewMoveDataReceive,
     ) -> models.Game:
         game = await self.session.get(models.Game, game_id)
-        # TODO: handle these checks and send errors back
         assert game is not None, "game doesnt exist"
         assert user_id in {game.white_id, game.black_id}, "can only play in your game"
-        assert game.status == GameStatus.playing, "game is not playing"
+
+        assert game.stage in {Stage.waiting, Stage.playing}, "make move should be called waiting or playing game"
+        game.stage = Stage.playing
 
         try:
             game = chess_service.try_move(
@@ -102,16 +101,29 @@ class GameRepository(AbstractRepository):
         await self.session.commit()
         return game
 
-    async def connect_to_game(
+    # async def connect_to_game(
+    #     self,
+    #     user_id: int,
+    #     game_id: int,
+    # ) -> models.Game:
+    #     game = await self.session.get(models.Game, game_id)
+    #     assert game is not None, "game doesn't exist"
+    #     if user_id in {game.white_id, game.black_id}:  # joined with `accept-invite`
+    #         game.stage = Stage.playing
+    #     else:
+    #         assert False, "joined game, but you are not player? spectator?"
+    #     await self.session.commit()
+    #     return game
+
+    async def fetch_game(
         self,
         user_id: int,
         game_id: int,
     ) -> models.Game:
         game = await self.session.get(models.Game, game_id)
-        # TODO: handle these checks and send errors back
-        assert game is not None, "game doesnt exist"
+        assert game is not None, "game doesn't exist"
         if user_id in {game.white_id, game.black_id}:  # joined with `accept-invite`
-            game.status = GameStatus.playing
+            game.stage = Stage.playing
         else:
             assert False, "joined game, but you are not player? spectator?"
         await self.session.commit()
@@ -123,13 +135,14 @@ class GameRepository(AbstractRepository):
         game_id: int,
     ) -> models.Game:
         game = await self.session.get(models.Game, game_id)
-        assert game is not None, "game doesnt exist"
-        assert game.status == GameStatus.playing, "game is not playing"
+        assert game is not None, "game doesn't exist"
+        assert game.stage == Stage.playing, "game is not playing"
         assert user_id in {
             game.white_id,
             game.black_id,
         }, "can only resign in your own game"
-        game.status = GameStatus.resign
-        game.whitewin = user_id == game.white_id
+        game.stage = Stage.ended
+        game.winner = Color.white if user_id == game.black_id else Color.black
+        game.result = Result.resign
         await self.session.commit()
         return game

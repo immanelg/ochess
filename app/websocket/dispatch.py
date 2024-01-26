@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.websockets import WebSocket
 
 from app import schemas
-from app.database.service import GameRepository
+from app.database.service import GameService
 from app.resources import broadcast
 from app.validation import validated_json
 
@@ -71,7 +71,7 @@ class LobbyDispatcher(BaseDispatcher):
             "cancel-invite": self.cancel_invite,
             # TODO: "get-invites" action
         }
-        self.game_repo = GameRepository(self.session)
+        self.game_repo = GameService(self.session)
 
     async def create_invite(self):
         data_schema = schemas.CreateInviteDataReceive(**self.data)
@@ -99,7 +99,7 @@ class LobbyDispatcher(BaseDispatcher):
     async def accept_invite(self):
         data_schema = schemas.AcceptInviteDataReceive(**self.data)
 
-        game_orm = await self.game_repo.accept_invite(self.user_id, data_schema)
+        game_orm = await self.game_repo.accept_game(self.user_id, data_schema)
         data = validated_json(
             {
                 "white_id": game_orm.white_id,
@@ -118,7 +118,7 @@ class LobbyDispatcher(BaseDispatcher):
 
     async def cancel_invite(self):
         data_schema = schemas.CancelInviteDataReceive(**self.data)
-        game_orm = await self.game_repo.cancel_invite(self.user_id, data_schema)
+        game_orm = await self.game_repo.cancel_game(self.user_id, data_schema)
         data = validated_json(
             {
                 "game_id": game_orm.id,
@@ -142,7 +142,7 @@ class GameDispatcher(BaseDispatcher):
     ) -> None:
         super().__init__(session, ws, action, data)
         self.game_id = game_id
-        self.game_repo = GameRepository(self.session)
+        self.game_repo = GameService(self.session)
 
         self.handlers = {
             "make-move": self.make_move,

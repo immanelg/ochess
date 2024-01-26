@@ -1,44 +1,44 @@
 from __future__ import annotations
+from chess import Color
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-from app.constants import GameStatus
+from app.constants import Result, Stage
 
 
 def to_snake_case(name: str) -> str:
     return "".join(
-        ["_" + char.lower() if char.isupper() else char for char in name]
+        ["_" + ch.lower() if ch.isupper() else ch for ch in name]
     ).lstrip("_")
 
 
 class BaseSchema(BaseModel):
-    model_config = {
-        "from_attributes": True,  # orm_mode
-        "alias_generator": to_snake_case,
-    }
+    model_config = ConfigDict(
+        from_attributes = True,  # orm_mode
+        alias_generator = to_snake_case,
+    )
 
 
 class Game(BaseSchema):
     id: int
     white_id: int | None
     black_id: int | None
-    status: GameStatus
-    position: Position
-    whitewin: bool | None
+
+    stage: Stage
+    result: Result
+    winner: Color
+
+    fen: str
+    moves: list[Move]
     # clocks: ...
 
 
-class Position(BaseSchema):
-    # id: int
-    # game_id: int
-    fen: str
-    moves: list[Move]
+class User(BaseSchema):
+    id: int
+    # rating
 
 
 class Move(BaseSchema):
-    # id: int
-    # position_id: int
-    ply: int
     move: str
 
 

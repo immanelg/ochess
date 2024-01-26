@@ -10,7 +10,7 @@ from sqlalchemy.orm import (
     relationship,
 )
 
-from app.constants import GameStatus
+from app.constants import Color, Stage, Result
 
 
 class Base(DeclarativeBase):
@@ -19,45 +19,45 @@ class Base(DeclarativeBase):
         return cls.__name__.lower()
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__} {self.to_dict()}"
+        return f"{self.__class__.__name__} {self.as_dict()}"
 
-    def to_dict(self):
+    def as_dict(self):
         return {field.name: getattr(self, field.name) for field in self.__table__.c}
 
 
-class HasId:
+class _Id:
     id: Mapped[int] = mapped_column(primary_key=True)
 
 
-class User(Base, HasId):
+class User(Base, _Id):
+    # rating
+    # created_at
+    # games
     pass
 
 
-class Game(Base, HasId):
+class Game(Base, _Id):
     white_id: Mapped[int | None] = mapped_column(ForeignKey("user.id"))
     black_id: Mapped[int | None] = mapped_column(ForeignKey("user.id"))
-    status: Mapped[GameStatus] = mapped_column(default=GameStatus.waiting)
-    whitewin: Mapped[
-        bool | None
-    ] = mapped_column()  # None if game doesn't have a winner
+    # created_at
 
-    # TODO: maybe simplify these relationships
-    position: Mapped[Position] = relationship(
-        lazy="selectin", cascade="all, delete-orphan"
-    )
-    # clocks: ...
+    stage: Mapped[Stage] = mapped_column(default=Stage.waiting)
 
+    # should be NULL if stage is 'playing'
+    result: Mapped[Result | None] =  mapped_column(default=None)
+    winner: Mapped[Color | None] = mapped_column(default=None)
 
-class Position(Base, HasId):
-    game_id: Mapped[int] = mapped_column(ForeignKey("game.id"))
     fen: Mapped[str] = mapped_column(default=STARTING_FEN)
-
-    moves: Mapped[list[Move]] = relationship(
-        lazy="selectin", cascade="all, delete-orphan"
-    )
+    moves: Mapped[list[Move]] = relationship(lazy="selectin", cascade="all, delete-orphan")
+    # clock
 
 
-class Move(Base, HasId):
-    position_id: Mapped[int] = mapped_column(ForeignKey("position.id"))
-    ply: Mapped[int]
+class Move(Base, _Id):
+    game_id: Mapped[int] = mapped_column(ForeignKey("game.id"))
     move: Mapped[str]
+
+# class Clock:
+#     pass
+
+# class Rating:
+#     pass
