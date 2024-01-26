@@ -44,17 +44,20 @@ class Game(Base, _Id):
     stage: Mapped[Stage] = mapped_column(default=Stage.waiting)
 
     # should be NULL if stage is 'playing'
-    result: Mapped[Result | None] =  mapped_column(default=None)
+    result: Mapped[Result | None] = mapped_column(default=None)
     winner: Mapped[Color | None] = mapped_column(default=None)
 
     fen: Mapped[str] = mapped_column(default=STARTING_FEN)
-    moves: Mapped[list[Move]] = relationship(lazy="selectin", cascade="all, delete-orphan")
+    moves: Mapped[list[Move]] = relationship(
+        lazy="selectin", cascade="all, delete-orphan", 
+    ) 
     # clock
 
 
 class Move(Base, _Id):
     game_id: Mapped[int] = mapped_column(ForeignKey("game.id"))
     move: Mapped[str]
+
 
 # class Clock:
 #     pass

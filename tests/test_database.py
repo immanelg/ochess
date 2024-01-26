@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import service
 
-from app.constants import Stage
+from app.constants import Color, Result, Stage
 from app.database import service
 from app.database import models
 from app import schemas
@@ -15,28 +15,27 @@ async def test_database_service(session: AsyncSession) -> None:
     user_1 = await user_repo.create()
     user_2 = await user_repo.create()
 
-    game = await game_repo.create_game(user_1.id, schemas.CreateInviteDataReceive(white=True))
+    game = await game_repo.create_game(user_1.id, schemas.CreateGameRequest(type="create_game", white=True))
     assert game.white_id == user_1.id
     assert game.stage == Stage.waiting
-    game = await game_repo.accept_game(user_2.id, schemas.AcceptInviteDataReceive(game_id=game.id))
+    game = await game_repo.accept_game(user_2.id, schemas.AcceptGameRequest(type="accept_game", game_id=game.id))
 
-    await game_repo.connect_to_game(user_1.id, game.id)
-    await game_repo.connect_to_game(user_2.id, game.id)
+    await session.refresh(game)
+    game = await game_repo.make_move(user_1.id, game.id, schemas.MakeMoveRequest(type="make_move", move="e2e4"))
+    game = await game_repo.make_move(user_2.id, game.id, schemas.MakeMoveRequest(type="make_move", move="c7c5"))
     game = await session.get(models.Game, game.id)
     assert game is not None
     assert game.stage == Stage.playing
+    assert game.result == None
+    assert game.winner == None
 
-    game = await game_repo.make_move(user_1.id, game.id, schemas.MakeNewMoveDataReceive(move="e2e4"))
-    game = await game_repo.make_move(user_2.id, game.id, schemas.MakeNewMoveDataReceive(move="c7c5"))
-
-    moves = game.position.moves
+    moves = game.moves
     assert [m.move for m in moves] == ["e2e4", "c7c5"]
-    assert moves[0].ply == 0
-    assert moves[1].ply == 1
-    assert game.position.fen == "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
+    assert game.fen == "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
 
-    game = await game_repo.resign(user_1.id, game.id)
-    assert game.stage == Stage.resign
-    assert game.whitewin == True
+    game = await game_repo.resign(user_2.id, game.id)
+    assert game.stage == Stage.ended
+    assert game.result == Result.resign
+    assert game.winner == Color.white
 
 

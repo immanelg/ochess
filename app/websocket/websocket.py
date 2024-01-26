@@ -5,7 +5,7 @@ from starlette.websockets import WebSocket
 
 from app.database.database import get_session
 from app.resources import broadcast
-from app.websocket.dispatch import GameDispatcher, LobbyDispatcher
+from app.websocket.dispatch import GameClient, GameService
 
 
 async def websocket_listener(ws: WebSocket) -> None:

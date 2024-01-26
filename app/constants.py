@@ -6,11 +6,13 @@ class Stage(str, Enum):
     playing = "playing"
     ended = "ended"
 
+
 class Result(str, Enum):
     checkmate = "checkmate"
     draw = "draw"
     resign = "resign"
     abandoned = "abandoned"
+
 
 class Color(str, Enum):
     white = "white"

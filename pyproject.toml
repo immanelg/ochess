@@ -34,14 +34,14 @@ test = "pytest tests/"
 
 [tool.pdm.dev-dependencies]
 test = [
-    "pytest>=7.4.0",
-    "pytest-env>=0.8.2",
-    "pytest-asyncio>=0.21.0",
-    "async-asgi-testclient>=1.4.11",
+    "pytest",
+    "pytest-env",
+    "pytest-asyncio",
+    "async-asgi-testclient",
 ]
 lint = [
-    "ruff>=0.0.275",
-    "black>=23.3.0",
+    "ruff",
+    "black",
 ]
 
 [tool.ruff]
