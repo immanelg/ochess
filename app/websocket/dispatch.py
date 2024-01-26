@@ -104,8 +104,10 @@ class GameClient(Client):
     def __init__(
         self,
         socket: WebSocket,
+        game_id: int,
     ) -> None:
         super().__init__(socket)
+        self.game_id = game_id
 
         self.handlers = {
             "make_move": self.make_move,
