@@ -99,7 +99,7 @@ class GameClient(Client):
     socket: WebSocket
     handlers: dict[str, Handler]
     user_id: int | None = None
-    game_id: int | None = None
+    game_id: int 
 
     def __init__(
         self,
