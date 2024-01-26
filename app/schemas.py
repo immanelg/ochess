@@ -43,9 +43,15 @@ class Move(BaseSchema):
     move: str
 
 
-class Error(BaseSchema):
+class ErrorResponse(BaseSchema):
     type: Literal["error"]
     detail: str
+
+
+# dummy auth
+class AuthRequest(BaseSchema):
+    type: Literal["auth"]
+    user_id: int
 
 
 # lobby

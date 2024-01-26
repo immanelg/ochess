@@ -112,20 +112,6 @@ class GameService(BaseService):
         await self.session.commit()
         return game
 
-    # async def connect_to_game(
-    #     self,
-    #     user_id: int,
-    #     game_id: int,
-    # ) -> models.Game:
-    #     game = await self.session.get(models.Game, game_id)
-    #     assert game is not None, "game doesn't exist"
-    #     if user_id in {game.white_id, game.black_id}:  # joined with `accept-invite`
-    #         game.stage = Stage.playing
-    #     else:
-    #         assert False, "joined game, but you are not player? spectator?"
-    #     await self.session.commit()
-    #     return game
-
     async def fetch_game(
         self,
         game_id: int,

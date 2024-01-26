@@ -12,6 +12,8 @@ Data: TypeAlias = dict[str, Any]
 Handler: TypeAlias = Callable[[Data], Awaitable[None]]
 
 
+# TODO: validation errors are not catched now at all. Catch them and send errors back. Also, catch exception raised by DB services.
+
 class Client:
     user_id: int | None
     socket: WebSocket
@@ -28,7 +30,7 @@ class Client:
         handle: Handler | None = self.handlers.get(message_type)
         if handle is None:
             await self.socket.send(
-                schemas.Error(
+                schemas.ErrorResponse(
                     type="error", detail=f"unknown message type {message_type}"
                 ).model_dump()
             )
@@ -38,7 +40,7 @@ class Client:
             await handle(data)
         except Exception as exc:
             await self.socket.send(
-                schemas.Error(type="error", detail="internal error").model_dump()
+                schemas.ErrorResponse(type="error", detail="internal error").model_dump()
             )
             raise exc
 
@@ -58,8 +60,15 @@ class LobbyClient(Client):
             "create_game": self.create_game,
             "accept_game": self.accept_game,
             "cancel_game": self.cancel_game,
-            "get-invites": self.get_invites,
+            "get_waiting_games": self.get_waiting_games,
+            "auth": self.auth,
         }
+
+    async def auth(self, data: Data) -> None:
+        # dummy implementation. we fully trust clients.
+        data_schema = schemas.AuthRequest(**data)
+        self.user_id = data_schema.user_id;
+
 
     async def create_game(self, data: Data) -> None:
         service = GameService(get_session())
@@ -96,7 +105,7 @@ class LobbyClient(Client):
         resp = schemas.CancelGameResponse(type="cancel_game", game_id=game_orm.id)
         await broadcast.publish(channel="lobby", message=resp.model_dump())
 
-    async def get_invites(self, data: Data) -> None:
+    async def get_waiting_games(self, data: Data) -> None:
         # TODO
         ...
 
@@ -119,7 +128,15 @@ class GameClient(Client):
             "make_move": self.make_move,
             "reconnect_game": self.reconnect,
             "resign": self.resign,
+            "auth": self.auth,
+            # "claim_draw": self.claim_draw,
+            # "get_moves": self.get_moves, # do we calculate legal moves on client or server?
         }
+
+    async def auth(self, data: Data) -> None:
+        # dummy implementation. we fully trust clients.
+        data_schema = schemas.AuthRequest(**data)
+        self.user_id = data_schema.user_id;
 
     async def make_move(self, data: Data) -> None:
         data_schema = schemas.MakeMoveRequest(**data)
