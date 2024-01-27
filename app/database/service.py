@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import random
+
 import chess
 from requests import session
 from sqlalchemy import select
@@ -34,9 +36,11 @@ class GameService(BaseService):
         user_id: int,
         data: schemas.CreateGameRequest,
     ) -> models.Game:
+        if data.white is None:
+            data.white = random.choice([False, True])
         game = models.Game(
-            white_id=user_id if data.white else None,
-            black_id=user_id if not data.white else None,
+            white_id=user_id if data.white is True else None,
+            black_id=user_id if data.white is False else None,
         )
         self.session.add(game)
         await self.session.commit()

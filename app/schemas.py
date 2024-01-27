@@ -62,7 +62,7 @@ class AuthRequest(BaseSchema):
 
 class CreateGameRequest(BaseSchema):
     type: Literal["create_game"]
-    white: bool
+    white: bool | None
 
 
 class CreateGameResponse(BaseSchema):
