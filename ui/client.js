@@ -4,11 +4,11 @@ export class WSClient {
     this.url = this.baseurl + url;
   }
 
-  reconnect = ms => {
+  reconnect = sec => {
     setTimeout(() => {
       console.log("Reconnecting");
       this.connect();
-    }, ms);
+    }, 1000*sec);
   };
 
   connect() {
@@ -21,17 +21,15 @@ export class WSClient {
 
     this.ws.onmessage = event => {
       const text = event.data;
-      const obj = JSON.parse(text);
-      console.log("Got data", obj);
-      const action = obj.action;
-      const data = obj.data;
-      this.onMsg(action, data);
+      const msg = JSON.parse(text);
+      console.log(`Got message ${msg}`);
+      this.onMsg(msg);
     };
 
     this.ws.onclose = event => {
       console.log("Closing", event);
       this.onClose(event);
-      this.reconnect(10_000);
+      this.reconnect(10);
     };
 
     this.ws.onerror = event => {
@@ -53,7 +51,7 @@ export class WSClient {
     // ...
   }
 
-  onMsg(action, data) {
+  onMsg(msg) {
     // ...
   }
 

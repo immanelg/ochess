@@ -1,98 +1,112 @@
+//@ts-check
 import m from "mithril";
 import { WSClient } from "./client";
+import { userId } from "./user";
 import NavBar from "./Navbar";
 
-const dataset = document.getElementById("data")?.dataset;
-const userId = parseInt(dataset.userId);
-
 export default function Lobby() {
+  /**
+    * @type {Array<{
+          gameId: string,
+          whiteId?: string,
+          blackId?: string,
+    * }>}
+    */
   let invites = [];
 
   const client = new WSClient("lobby");
-  window.client = client;
 
-  client.onMsg = (action, data) => {
-    switch (action) {
+  client.onOpen = _ => {
+    client.sendMsg({type: "auth", user_id: userId});
+  }
+
+  client.onMsg = (msg) => {
+    switch (msg.type) {
       case "ping":
         console.log("pong!");
+        client.sendMsg({type: "ping"});
         break;
-      case "create-invite":
+      case "create_game":
         invites.push({
-          user_id: data.user_id,
-          game_id: data.game_id,
-          color: data.white === true ? "white" : "black",
+          gameId: msg["game_id"],
+          whiteId: msg["white_id"],
+          blackId: msg["black_id"],
         });
         console.table(invites);
         break;
-      case "accept-invite":
-        // we are in this game, meaning it's either us who accepted it
-        // or someone else accepted our invite.
-        if (data.white_id === userId || data.black_id === userId)
-          m.route.set(`/game/${data.game_id}`);
-        invites = invites.filter(inv => inv.game_id !== data.game_id);
+      case "accept_game":
+        // did someone just accept our invite 👉👈?
+        if ([msg["white_id"], msg["black_id"]].includes(userId)) {
+          m.route.set(`/game/${msg["game_id"]}`);
+          return;
+        }
+        invites = invites.filter(inv => inv.gameId !== msg["game_id"]);
         console.log("Someone accepted an invite!");
         console.table(invites);
         break;
-      case "cancel-invite":
-        invites = invites.filter(inv => inv.game_id !== data.game_id);
+      case "cancel_game":
+        invites = invites.filter(inv => inv.gameId !== msg["game_id"]);
         console.log("Invite is cancelled");
         console.table(invites);
         break;
       case "error":
-        console.error(`Server sent error ${data}`);
+        console.error(`Server sent error ${msg}`);
         break;
       default:
         console.error(
-          `Server sent unknown action in message to lobby: ${{ action, data }}`,
+          `Unknown message: ${msg}`,
         );
         break;
     }
     m.redraw();
   };
 
-  function onMyCreateInvite() {
+  function create(white = null) {
+    console.log("Create invite");
     client.sendMsg({
-      action: "create-invite",
+      action: "create_game",
       data: {
-        white: Math.random() < 0.5,
+        white: white,
       },
     });
-    console.log("Creating invite");
   }
 
-  function onMyAcceptInvite(gameId) {
+  /**
+    * @param gameId {string}
+    */
+  function accept(gameId) {
+    console.log("Accepted invite");
     client.sendMsg({
-      action: "accept-invite",
+      action: "accept_game",
       data: {
         game_id: gameId,
       },
     });
-    console.log("Accepting invite");
   }
 
-  function onMyCancelInvite(gameId) {
-    client.sendMsg({
-      action: "cancel-invite",
-      data: {
-        game_id: gameId,
-      },
-    });
+  /**
+    * @param gameId {string}
+    */
+  function cancel(gameId) {
     console.log("Cancelling invite");
-  }
-
-  function onMyCreateInvite() {
     client.sendMsg({
-      action: "create-invite",
+      action: "cancel_game",
       data: {
-        white: Math.random() < 0.5,
+        game_id: gameId,
       },
     });
-    console.log("Creating invite");
   }
 
-  function onClickInvite(inviteUserId, gameId) {
-    if (userId === inviteUserId) onMyCancelInvite(gameId);
-    else onMyAcceptInvite(gameId);
+
+  /**
+    * @param creatorId {string}
+    * @param gameId {string}
+    */
+  function clickInvite(creatorId, gameId) {
+    if (userId === creatorId)
+      cancel(gameId);
+    else
+      accept(gameId);
   }
 
   return {
@@ -111,17 +125,17 @@ export default function Lobby() {
             m(
               "tr",
               {
-                onclick: () => onClickInvite(row.user_id, row.game_id),
-                key: row.game_id,
+                onclick: () => clickInvite(row.whiteId ?? row.blackId, row.gameId),
+                key: row.gameId,
               },
-              ["color", "user_id", "game_id"].map(col => m("td", row[col])),
+              ["color", "userId", "gameId"].map(col => m("td", row[col])),
             ),
           ),
         ),
       ),
       m(
         ".center",
-        m("button", { onclick: event => onMyCreateInvite() }, "New game"),
+        m("button", { onclick: _event => create() }, "New Game"),
       ),
     ],
   };
