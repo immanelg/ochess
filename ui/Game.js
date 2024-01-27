@@ -1,102 +1,142 @@
+//@ts-check
 import m from "mithril";
 import NavBar from "./Navbar";
 import { Chessground } from "chessground";
-import { WSClient } from "./client";
-
-const dataset = document.getElementById("data")?.dataset;
-const userId = parseInt(dataset.userId);
+import { OchessWebSocket } from "./client";
+import { userId } from "./user";
 
 // TODO:
-// restrict moves on board to only legal.
-// check for game state for end of game.
-// resign button and event.
-// refactor this potentially huge function.
+// fetch legal moves from the server
+// fix funky chessground (im lazy to understand its API)
+// resign (I mean in chess)
+// player online, spectator count, etc
+
+/**
+ *  @typedef Game
+ *  @property {number} id
+ *  @property {number?} whiteId
+ *  @property {number?} blackId,
+ *  @property {"waiting" | "playing" | "ended"} stage,
+ *  @property {"checkmate" | "draw" | "resign" | "abandoned"} result,
+ *  @property {"white" | "black"} winner,
+ *  @property {string} fen,
+ *  @property {Array<{move: string}>} moves,
+ */
 
 export default function Game() {
-  let state = {
-    game: {
-      id: m.route.param("gameId"),
-    },
-    color: null,
-    /** @type {import("chessground/api").Api | null} */
-    cg: null,
-  };
+  const gameId = parseInt(m.route.param("gameId"));
 
-  const client = new WSClient(`game/${state.game.id}`);
+  /** @type Game */
+  let game = {};
+  game.id = gameId;
 
-  window.state = state;
-  window.client = client;
+  /** @type {"white" | "black" | null} */
+  let myColor = null;
 
-  client.onOpen = () => {
+  /** @type {import("chessground/api").Api | null} */
+  let cg;
+
+  const client = new OchessWebSocket(`game/${gameId}`);
+
+  client.onConnect = () => {
     client.sendMsg({
-      action: "connect-to-game",
-      data: {},
+      type: "auth",
+      user_id: userId,
+    })
+    client.sendMsg({
+      type: "fetch_game",
     });
   };
 
-  client.onMsg = (action, data) => {
-    const handler =
-      {
-        game: onGameUpdate,
-        error: () => console.error(`Server sent error ${data}`),
-      }[action] ?? function() {
-        console.error(
-          `Server sent unknown action in message to lobby: ${{ action, data }}`,
-        );
-      };
-    handler(data);
+  client.onMsg = msg => {
+    switch (msg["type"]) {
+      case "pong":
+        console.log("Pong!");
+        client.sendMsg({ type: "ping" });
+        break;
+      case "error":
+        console.log("Server sent error", msg);
+        break;
+      case "game":
+        updateGame(msg.game);
+        break;
+      case "auth_ok":
+        console.log("Authenticated", msg);
+        break;
+      default:
+        console.log("Unknown message", msg);
+        break;
+    }
     m.redraw();
   };
 
-  function turn(game) {
-    return game.position.moves.length % 2 === 0 ? "white" : "black";
+  function getTurn() {
+    if (!game.moves) return undefined;
+    return game.moves.length % 2 === 0 ? "white" : "black" ;
   }
 
-  function onGameUpdate(data) {
-    // we might have connected after opponent played a move, btw
-    // so we need to set full state
-    state.game = { ...state.game, ...data.game };
-    state.color ??= state.game.black_id === userId ? "black" : "white";
-    state.cg.set({
-      orientation: state.color,
-      turnColor: turn(state.game),
-      fen: state.game.position.fen,
+  /** 
+    * @param {Game} gameUpdated
+    */
+  function updateGame(gameUpdated) {
+    // update full state of the game, so even if we reconnected, we get valid state
+    game.id = gameUpdated["id"];
+    game.whiteId = gameUpdated["white_id"];
+    game.blackId = gameUpdated["black_id"];
+    game.stage = gameUpdated["stage"];
+    game.result = gameUpdated["result"];
+    game.winner = gameUpdated["winner"];
+    game.fen = gameUpdated["fen"];
+    game.moves = gameUpdated["moves"];
+
+    switch (userId) {
+      case game.whiteId:
+        myColor = "white";
+        break;
+      case game.blackId:
+        myColor = "black";
+        break;
+      default:
+        myColor = null;
+    }
+    console.assert(cg !== null);
+    cg.set({
+      orientation: myColor ?? "white",
+      turnColor: getTurn(),
+      fen: game.fen,
       movable: {
         free: true, // TODO: request dests and set them
-        color: turn(state.game),
+        color: getTurn(),
       },
     });
-    if (state.game.status !== "playing") {
-      state.cg.set({
+    if (game.stage !== "playing" && game.stage !== "waiting") {
+      cg.set({
         movable: {
           free: false,
-        }
-      })
+        },
+      });
     }
   }
 
-  function onMyMove(orig, dest) {
-    state.cg.set({
+  function makeMove(orig, dest) {
+    cg.set({
       movable: {
-        // set it immediatly
-        color: state.cg.state.turnColor === "white" ? "black" : "white",
+        color: undefined, // lock right after our move
       },
     });
     client.sendMsg({
-      action: "make-move",
-      data: {
+      type: "make_move",
         move: orig + dest,
-      },
     });
   }
 
   function init() {
     const el = document.querySelector(".cg-wrap");
-    state.cg = Chessground(el, { movable: false });
-    state.cg.set({
+    cg = Chessground(el, { movable: false });
+    cg.set({
       movable: {
         events: {
-          after: (orig, dest, _) => onMyMove(orig, dest),
+          after: (orig, dest, _) => makeMove(orig, dest),
         },
       },
     });
@@ -107,8 +147,13 @@ export default function Game() {
     view: () => [
       m(NavBar),
       m("section.blue.merida", m("div.cg-wrap", { oncreate: init })),
-      m("p", "White: ", state.game.white_id),
-      m("p", "Black: ", state.game.black_id),
+      m("p", "Game: ", JSON.stringify(game)),
+      m("p", "My color: ", myColor),
+      m("p", "My ID: ", userId),
+      m("p", "Game ID: ", gameId),
+      m("p", "White: ", game.whiteId),
+      m("p", "Black: ", game.blackId),
+      game.moves ? m("p", "Moves: ", game.moves.map(m => m.move).join(",")) : '',
     ],
   };
 }

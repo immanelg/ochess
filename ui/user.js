@@ -1,7 +1,14 @@
+// @ts-check
+
 // Yes. I know. we don't care about security right now. I will do OAuth2 some day, not today.
+/** @type {number} */
+export let userId;
+
 const key = "user_id";
-export let userId = localStorage.getItem(key)
-if (!userId) {
-  userId ??= Math.random() * Math.pow(2, 64);
-  localStorage.setItem(key, userId);
+const storedId = localStorage.getItem(key);
+if (storedId === null) {
+  userId = Math.ceil(Math.random() * 2147483647);
+  localStorage.setItem(key, userId.toString());
+} else {
+  userId = parseInt(storedId);
 }
