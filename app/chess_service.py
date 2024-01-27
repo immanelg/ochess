@@ -2,18 +2,31 @@ import chess
 
 from app.constants import Color, Result, Stage
 from app.database import models
-
-# TODO: refactor logic somehow somewhere
+from app.logging import logger
+from app.exception import ClientError
 
 
 def try_move(game: models.Game, move: str, white: bool) -> models.Game:
-    """Validates move and returns mutated ORM model or raises an exception."""
-    current_ply = len(game.moves)
-    if white and current_ply % 2 != 0:
-        raise chess.IllegalMoveError()
+    """
+    Plays move (mutating model) or raises ClientError
+    """
+    length = len(game.moves)
+    if not white != length % 2:
+        raise ClientError(
+            f"illegal move {move}: wrong turn, attempts {'white' if white else 'black'} move, "
+            f"but there are {length} moves played"
+        )
 
     board = chess.Board(fen=game.fen)
-    board.push_uci(move)
+    try:
+        board.push_uci(move)
+    except chess.IllegalMoveError as e:
+        raise ClientError(f"illegal move {move}") from e
+    except chess.InvalidMoveError as e:
+        raise ClientError(f"invalid move {move}") from e
+    except chess.AmbiguousMoveError as e:
+        raise ClientError(f"ambigious move {move}") from e
+
 
     if board.is_checkmate():
         game.stage = Stage.ended
@@ -27,3 +40,4 @@ def try_move(game: models.Game, move: str, white: bool) -> models.Game:
     game.moves.append(models.Move(move=move))
 
     return game
+

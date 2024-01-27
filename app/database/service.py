@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app import chess_service, schemas
 from app.constants import Color, Result, Stage
 from app.database import models
+from app.exception import ClientError
 
 
 class BaseService:
@@ -16,16 +17,13 @@ class BaseService:
 
 
 class UserService(BaseService):
-    async def create_user(self, id: int):
+    async def create_or_get_user(self, id: int):
         if (user := await self.session.get(models.User, id)) is not None:
             return user
         user = models.User(id=id)
         self.session.add(user)
         await self.session.commit()
         return user
-
-
-# TODO! return errors instead of assertions.
 
 
 class GameService(BaseService):
@@ -51,18 +49,16 @@ class GameService(BaseService):
     ) -> models.Game:
         game_id = data.game_id
         game = await self.session.get(models.Game, game_id)
-        assert game is not None, "game doesn't exist"
-        assert game.stage == Stage.waiting, "game is already playing"
-        assert user_id not in {
-            game.white_id,
-            game.black_id,
-        }, "cannot accept your own invite"
-        assert (
-            game.black_id is not None or game.white_id is not None
-        ), "invalid game state: both players are null"
-        assert (
-            game.black_id is None or game.white_id is None
-        ), "accepted invite, but game already playing"
+
+        if game is None:
+            raise ClientError("game doesn't exist")
+        if game.stage != Stage.waiting:
+            raise ClientError("game is already playing")
+        if user_id  in {game.white_id, game.black_id}:
+            raise ClientError("cannot accept your own invite")
+        if game.black_id is not None and game.white_id is not None:
+            raise ClientError("accepted invite, but game is already playing")
+
         if game.black_id is None:
             game.black_id = user_id
         elif game.white_id is None:
@@ -76,12 +72,13 @@ class GameService(BaseService):
         data: schemas.CancelGameRequest,
     ) -> models.Game:
         game = await self.session.get(models.Game, data.game_id)
-        assert game is not None, "game doesnt exist"
-        assert game.stage == Stage.waiting, "game is already playing"
-        assert user_id in {
-            game.white_id,
-            game.black_id,
-        }, "can only cancel your own game"
+        if game is None:
+            raise ClientError("game doesn't exist")
+        if game.stage != Stage.waiting:
+            raise ClientError("cannot cancel non-waiting game")
+        if user_id not in { game.white_id, game.black_id}:
+            raise ClientError("can only cancel your own game")
+
         await self.session.delete(game)
         await self.session.commit()
         return game
@@ -93,24 +90,19 @@ class GameService(BaseService):
         data: schemas.MakeMoveRequest,
     ) -> models.Game:
         game = await self.session.get(models.Game, game_id)
-        assert game is not None, "game doesn't exist"
-        assert user_id in {game.white_id, game.black_id}, "can only play in your game"
+        if game is None:
+            raise ClientError("game doesn't exist")
+        if user_id not in {game.white_id, game.black_id}:
+            raise ClientError("can only make move in your game")
 
-        assert game.stage in {
-            Stage.waiting,
-            Stage.playing,
-        }, "make move should be called waiting or playing game"
+        if game.stage not in { Stage.waiting, Stage.playing }:
+            raise ClientError("make move should be called waiting or playing game")
+
         game.stage = Stage.playing
 
-        try:
-            game = chess_service.try_move(
-                game, data.move, white=(user_id == game.white_id)
-            )
-        except chess.IllegalMoveError as e:
-            assert False, f"illegal move {e!s}"
-        except chess.InvalidMoveError as e:
-            assert False, f"invalid move {e!s}"
-
+        game = chess_service.try_move(
+            game, data.move, white=(user_id == game.white_id)
+        )
         await self.session.commit()
         return game
 
@@ -127,12 +119,13 @@ class GameService(BaseService):
         game_id: int,
     ) -> models.Game:
         game = await self.session.get(models.Game, game_id)
-        assert game is not None, "game doesn't exist"
-        assert game.stage == Stage.playing, "game is not playing"
-        assert user_id in {
-            game.white_id,
-            game.black_id,
-        }, "can only resign in your own game"
+        if game is None:
+            raise ClientError("game doesn't exist")
+        if game.stage != Stage.playing:
+            raise ClientError("cannot resign in non-playing game")
+        if user_id not in {game.white_id, game.black_id}:
+            raise ClientError("can only resign in your game")
+
         game.stage = Stage.ended
         game.winner = Color.white if user_id == game.black_id else Color.black
         game.result = Result.resign

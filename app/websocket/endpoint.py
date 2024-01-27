@@ -52,10 +52,7 @@ async def _receive(ws: WebSocket) -> None:
     if client is None:
         return
 
-    async for message in ws.iter_json():
-        logger.info("message from %s: %s", client.user_id, message)
-        await client.on_message(message)
-
+    await client.receive_loop()
 
 def _get_channel(socket: WebSocket) -> Any:
     game_id = socket.path_params.get("game_id")
