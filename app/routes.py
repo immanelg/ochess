@@ -2,15 +2,13 @@ from starlette.routing import Mount, Route, WebSocketRoute
 
 from app import views
 from app.resources import static
-from app.websocket import websocket
+from app.websocket.endpoint import websocket_listener
 
 routes = [
     Route("/", views.home, name="home"),
     # Route("/lobby", views.lobby_view, name="lobby"),
     # Route("/game/{game_id:int}", views.game_view, name="game"),
-    WebSocketRoute(
-        "/ws/game/{game_id:int}", websocket.websocket_listener, name="ws_game"
-    ),
-    WebSocketRoute("/ws/lobby", websocket.websocket_listener, name="ws_lobby"),
+    WebSocketRoute("/ws/game/{game_id:int}", websocket_listener, name="ws_game"),
+    WebSocketRoute("/ws/lobby", websocket_listener, name="ws_lobby"),
     Mount("/static", static, name="static"),
 ]
