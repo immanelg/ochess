@@ -3,10 +3,7 @@ from __future__ import annotations
 import random
 
 import chess
-from requests import session
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app import chess_service, schemas
 from app.constants import Color, Result, Stage

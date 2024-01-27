@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import Annotated, Literal
-from chess import Color
 
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Literal
+
+from chess import Color
+from pydantic import BaseModel, ConfigDict
 
 from app.constants import Result, Stage
 
@@ -115,6 +116,9 @@ class _WaitingGame(BaseSchema):
 class MakeMoveRequest(BaseSchema):
     type: Literal["make_move"]
     move: str
+
+class FetchGameRequest(BaseSchema):
+    type: Literal["fetch_game"]
 
 
 class GameResponse(BaseSchema):
