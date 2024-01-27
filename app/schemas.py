@@ -121,6 +121,7 @@ class MakeMoveRequest(BaseSchema):
     type: Literal["make_move"]
     move: str
 
+
 class FetchGameRequest(BaseSchema):
     type: Literal["fetch_game"]
 

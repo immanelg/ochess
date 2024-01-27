@@ -10,7 +10,7 @@ from sqlalchemy.orm import (
     relationship,
 )
 
-from app.constants import Color, Stage, Result
+from app.constants import Color, Result, Stage
 
 
 class Base(DeclarativeBase):
