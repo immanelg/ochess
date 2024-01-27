@@ -55,6 +55,10 @@ class AuthRequest(BaseSchema):
     user_id: int
 
 
+class AuthOk(BaseSchema):
+    type: Literal["auth_ok"]
+
+
 # lobby
 
 # class LobbyRequest(BaseSchema):
@@ -63,7 +67,7 @@ class AuthRequest(BaseSchema):
 
 class CreateGameRequest(BaseSchema):
     type: Literal["create_game"]
-    white: bool | None
+    white: bool | None = None
 
 
 class CreateGameResponse(BaseSchema):

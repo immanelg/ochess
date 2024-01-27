@@ -5,6 +5,7 @@ from starlette.websockets import WebSocket
 
 from app.resources import broadcast
 from app.websocket.dispatch import Client, GameClient, LobbyClient
+from app.logging import logger
 
 
 async def websocket_listener(ws: WebSocket) -> None:
@@ -13,12 +14,16 @@ async def websocket_listener(ws: WebSocket) -> None:
 
     async with anyio.create_task_group() as task_group:
 
-        async def run_receive() -> None:
+        async def run_receiver(ws) -> None:
             await _websocket_receiver(ws)
             task_group.cancel_scope.cancel()
 
-        task_group.start_soon(run_receive)
-        await _websocket_sender(ws)
+        async def run_sender(ws) -> None:
+            await _websocket_sender(ws)
+            task_group.cancel_scope.cancel()
+
+        task_group.start_soon(run_receiver, ws)
+        task_group.start_soon(run_sender, ws)
 
 
 async def _websocket_sender(ws: WebSocket) -> None:
@@ -44,10 +49,14 @@ def get_client(socket: WebSocket) -> Client | None:
 async def _websocket_receiver(ws: WebSocket) -> None:
     """Receive json data from clients"""
 
+    logger.debug("new socket %s", ws.client)
+
     client = get_client(ws)
     if client is None:
+        logger.debug("cannot determine client for socket %s", ws)
         return
 
     async for msg in ws.iter_json():
-        typing.cast(dict[str, typing.Any], msg)
+        # typing.cast(dict[str, typing.Any], msg)
+        logger.debug("msg user_id=%s %s", client.user_id, msg)
         await client.on_message(msg)

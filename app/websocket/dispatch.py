@@ -3,10 +3,10 @@ from typing import Any, Awaitable, Callable, TypeAlias
 from starlette.websockets import WebSocket
 
 from app import schemas
-from app.database.service import GameService
 from app.database.database import get_session
+from app.database.service import GameService, UserService
 from app.resources import broadcast
-
+from app.logging import logger
 
 Data: TypeAlias = dict[str, Any]
 Handler: TypeAlias = Callable[[Data], Awaitable[None]]
@@ -14,8 +14,9 @@ Handler: TypeAlias = Callable[[Data], Awaitable[None]]
 
 # TODO: validation errors are not catched now at all. Catch them and send errors back. Also, catch exception raised by DB services.
 
+
 class Client:
-    user_id: int | None
+    user_id: int | None = None
     socket: WebSocket
     handlers: dict[str, Handler]
 
@@ -24,6 +25,9 @@ class Client:
         socket: WebSocket,
     ) -> None:
         self.socket = socket
+        self.handlers = {
+            "auth": self.auth,
+        }
 
     async def on_message(self, data: Data) -> None:
         message_type = data.get("type", None)
@@ -37,12 +41,25 @@ class Client:
             return
 
         try:
+            logger.debug("calling handler %s", handle.__name__)
             await handle(data)
         except Exception as exc:
-            await self.socket.send(
-                schemas.ErrorResponse(type="error", detail="internal error").model_dump()
+            await self.socket.send_json(
+                schemas.ErrorResponse(
+                    type="error", detail="internal error"
+                ).model_dump()
             )
             raise exc
+
+    async def auth(self, data: Data) -> None:
+        # dummy implementation. 
+        data_schema = schemas.AuthRequest(**data)
+        service = UserService(get_session());
+        await service.create_user(id=data_schema.user_id)
+        self.user_id = data_schema.user_id
+        resp = schemas.AuthOk(type="auth_ok")
+        logger.debug("auth send %s", resp.model_dump())
+        await self.socket.send_json(resp.model_dump())
 
 
 class LobbyClient(Client):
@@ -56,21 +73,17 @@ class LobbyClient(Client):
     ) -> None:
         super().__init__(socket)
 
-        self.handlers = {
+        self.handlers |= {
             "create_game": self.create_game,
             "accept_game": self.accept_game,
             "cancel_game": self.cancel_game,
             "get_waiting_games": self.get_waiting_games,
-            "auth": self.auth,
         }
 
-    async def auth(self, data: Data) -> None:
-        # dummy implementation. we fully trust clients.
-        data_schema = schemas.AuthRequest(**data)
-        self.user_id = data_schema.user_id;
-
-
     async def create_game(self, data: Data) -> None:
+        # TODO: automatic pairing
+        # when client connects, check if appropriate invite
+        # alrady exists and immediatly accept it
         service = GameService(get_session())
         data_schema = schemas.CreateGameRequest(**data)
         assert self.user_id
@@ -124,19 +137,14 @@ class GameClient(Client):
         super().__init__(socket)
         self.game_id = game_id
 
-        self.handlers = {
+        self.handlers |= {
             "make_move": self.make_move,
             "reconnect_game": self.reconnect,
+            "fetch_game": self.fetch_game,
             "resign": self.resign,
-            "auth": self.auth,
             # "claim_draw": self.claim_draw,
             # "get_moves": self.get_moves, # do we calculate legal moves on client or server?
         }
-
-    async def auth(self, data: Data) -> None:
-        # dummy implementation. we fully trust clients.
-        data_schema = schemas.AuthRequest(**data)
-        self.user_id = data_schema.user_id;
 
     async def make_move(self, data: Data) -> None:
         data_schema = schemas.MakeMoveRequest(**data)
@@ -163,6 +171,7 @@ class GameClient(Client):
 
     async def fetch_game(self, data: Data) -> None:
         assert self.user_id
+        _ = schemas.FetchGameRequest(**data);
         service = GameService(get_session())
         game_orm = await service.fetch_game(self.game_id)
         resp = schemas.GameResponse(

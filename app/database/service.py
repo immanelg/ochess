@@ -16,9 +16,8 @@ class BaseService:
 
 
 class UserService(BaseService):
-    # TODO: this is dummy implementation that is only used in dummy middleware
-    async def create(self):
-        user = models.User()
+    async def create_user(self, id: int):
+        user = models.User(id=id)
         self.session.add(user)
         await self.session.commit()
         return user
