@@ -17,7 +17,7 @@ class BaseService:
 
 class UserService(BaseService):
     async def create_user(self, id: int):
-        if user := await self.session.get(models.User, id) is not None:
+        if (user := await self.session.get(models.User, id)) is not None:
             return user
         user = models.User(id=id)
         self.session.add(user)

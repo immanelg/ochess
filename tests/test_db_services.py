@@ -11,8 +11,8 @@ async def test_database_service(session: AsyncSession) -> None:
     # TODO: separate to unit tests instead of doing it all in one big run?
     user_repo = service.UserService(session)
     game_repo = service.GameService(session)
-    user_1 = await user_repo.create_user()
-    user_2 = await user_repo.create_user()
+    user_1 = await user_repo.create_user(1)
+    user_2 = await user_repo.create_user(2)
 
     game = await game_repo.create_game(
         user_1.id, schemas.CreateGameRequest(type="create_game", white=True)
@@ -38,6 +38,7 @@ async def test_database_service(session: AsyncSession) -> None:
 
     moves = game.moves
     assert [m.move for m in moves] == ["e2e4", "c7c5"]
+    assert [m.ply for m in moves] == [1, 2]
     assert game.fen == "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
 
     game = await game_repo.resign(user_2.id, game.id)
