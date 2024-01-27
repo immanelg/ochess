@@ -23,15 +23,15 @@ class BaseSchema(BaseModel):
 
 class Game(BaseSchema):
     id: int
-    white_id: int | None
-    black_id: int | None
+    white_id: int | None = None
+    black_id: int | None = None
 
-    stage: Stage
-    result: Result
-    winner: Color
+    stage: Stage | None = None
+    result: Result | None = None
+    winner: Color | None = None
 
     fen: str
-    moves: list[Move]
+    moves: list[Move] = []
     # clocks: ...
 
 
@@ -105,12 +105,12 @@ class GetWaitingGamesRequest(BaseSchema):
 
 class GetWaitingGamesResponse(BaseSchema):
     type: Literal["get_waiting_games"]
-    games: list[_WaitingGame]
+    games: list[_WaitingGame] = []
 
 
 class _WaitingGame(BaseSchema):
-    white_id: int | None
-    black_id: int | None
+    white_id: int | None = None
+    black_id: int | None = None
     game_id: int
 
 
@@ -120,6 +120,7 @@ class _WaitingGame(BaseSchema):
 class MakeMoveRequest(BaseSchema):
     type: Literal["make_move"]
     move: str
+    # time
 
 
 class FetchGameRequest(BaseSchema):
