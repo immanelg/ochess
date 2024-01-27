@@ -1,11 +1,9 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.database import service
 
-from app.constants import Color, Result, Stage
-from app.database import service
-from app.database import models
 from app import schemas
+from app.constants import Color, Result, Stage
+from app.database import models, service
 
 
 @pytest.mark.asyncio

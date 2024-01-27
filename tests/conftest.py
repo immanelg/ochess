@@ -1,13 +1,13 @@
-from typing import Generator, AsyncGenerator
 import asyncio
+from typing import AsyncGenerator, Generator
 
 import pytest
 import pytest_asyncio
 from async_asgi_testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.main import app
 from app.database.database import engine
+from app.main import app
 
 
 @pytest.fixture(scope="session", autouse=True)
