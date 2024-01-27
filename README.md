@@ -26,11 +26,8 @@ pdm run upgrade-db
 npm install
 ```
 
-Available commands:
+Other available commands:
 ```bash
-# Build and watch UI changes
-npm run watch
-
 # Start development server (on 127.0.0.1:8000)
 pdm run serve-dev
 
@@ -40,6 +37,15 @@ pdm run test
 # Run formatting and linting
 pdm run fmt
 pdm run lint
+
+# Build JS bundle
+npm run build
+
+# Build and watch changes
+npm run watch
+
+# Format code
+npm run fmt
 ```
 
 ## Features
