@@ -28,8 +28,9 @@ serve-dev = "uvicorn app.main:app --reload --host 127.0.0.1 --port 8000 {args}"
 migrate-db = "alembic revision --autogenerate {args}"
 downgrade-db = "alembic downgrade {args}"
 upgrade-db = "alembic upgrade head"
-fmt.composite = ["black app/", "ruff app/ --fix"]
-lint = "ruff check app/"
+lint = "ruff check app/ --fix"
+check = "ruff check app/"
+fmt = ["ruff format app/ tests/"]
 test = "pytest tests/"
 
 [tool.pdm.dev-dependencies]

@@ -34,9 +34,10 @@ pdm run serve-dev
 # Run backend tests
 pdm run test
 
-# Run formatting and linting
+# Run ruff formatting and linting
 pdm run fmt
 pdm run lint
+pdm run check
 
 # Build JS bundle
 npm run build
