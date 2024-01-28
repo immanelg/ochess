@@ -42,7 +42,6 @@ test = [
 ]
 lint = [
     "ruff",
-    "black",
 ]
 
 [tool.ruff]
