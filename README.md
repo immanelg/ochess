@@ -61,20 +61,21 @@ npm run fmt
 ```
 
 ## Features
-- Create new games in lobby room
-- Accept/cancel invites
-- Make moves with server-side validation and game position evaluation.
+- Create/cancel/accept/list games in the lobby.
+- Connect to games and make moves, resign, claim draw. The server validates moves, evaluates game position, etc, and notifies clients.
 
 ## TODO
-- Refactor (socket communication handling (and API), channels, errors, DB sessions, repositories, leaking abstractions, validation, etc.)
+- Do more refactoring on the backend.
 - CI/CD, Docker, etc.
-- Websocket Authentication && lichess auth.
-- More game events: offer draw, claim draw, rematch, threefold repetition etc.
-- Pydantic -> msgspec (ws.send_bytes).
-- Use Redis backend for pub/sub.
-- Timeouts for invites.
-- Clocks.
+- Expire old invites after some time of user being offline.
+- Show online count and spectator count. Also, chat messages?
+- Third-party authentication.
 - ELO ratings.
+- Clocks.
+- More events: claim_draw (check claimability on each move and store it in the db; also check for more types of automatic draws), offer_draw, rematch (just make a new private game inside a match). 
+- Use Redis backend for pub/sub.
 - HTTP API.
 - Daily games.
 - Tournaments, puzzles, etc.
+- Make front-end client not proof-of-concept, but a little bit better.
+
