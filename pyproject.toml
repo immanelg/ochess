@@ -25,9 +25,9 @@ py-modules = []
 
 [tool.pdm.scripts]
 serve-dev = "uvicorn app.main:app --reload --host 127.0.0.1 --port 8000 {args}"
-migrate-db = "alembic revision --autogenerate {args}"
-downgrade-db = "alembic downgrade {args}"
-upgrade-db = "alembic upgrade head"
+db-migration = "alembic revision --autogenerate {args}"
+db-upgrade = "alembic upgrade head"
+db-downgrade = "alembic downgrade {args}"
 lint = "ruff check app/ --fix"
 check = "ruff check app/"
 fmt = ["ruff format app/ tests/"]

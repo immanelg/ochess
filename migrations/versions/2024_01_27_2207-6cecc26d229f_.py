@@ -1,13 +1,12 @@
 """empty message
 
 Revision ID: 6cecc26d229f
-Revises: 
+Revises:
 Create Date: 2024-01-27 22:07:06.862128
 
 """
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "6cecc26d229f"
@@ -18,7 +17,7 @@ depends_on = None
 
 def upgrade() -> None:
     # Need to add manually
-    from sqlalchemy.schema import Sequence, CreateSequence
+    from sqlalchemy.schema import CreateSequence, Sequence
     op.execute(CreateSequence(Sequence('ply_seq')))
 
     op.create_table(
@@ -75,9 +74,10 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     # Need to add manually
-    from sqlalchemy.schema import Sequence, DropSequence
-    op.execute(DropSequence(Sequence('ply_seq')))
 
     op.drop_table("move")
     op.drop_table("game")
     op.drop_table("user")
+
+    from sqlalchemy.schema import DropSequence, Sequence
+    op.execute(DropSequence(Sequence('ply_seq')))

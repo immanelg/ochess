@@ -55,13 +55,8 @@ class Game(Base, _Id):
     # clock
 
 
-
-ply_seq = Sequence('ply_seq', start=1)
-
 class Move(Base, _Id):
-
     game_id: Mapped[int] = mapped_column(ForeignKey("game.id"))
-    ply: Mapped[int] = mapped_column(ply_seq, server_default=ply_seq.next_value())
     move: Mapped[str]
     # created_at
 
