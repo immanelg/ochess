@@ -12,8 +12,6 @@ from app.resources import broadcast
 Data: TypeAlias = dict[str, Any]
 Handler: TypeAlias = Callable[[Data], Awaitable[None]]
 
-# TODO: send && receive camelCase in pydantic models
-
 
 class Client:
     """
