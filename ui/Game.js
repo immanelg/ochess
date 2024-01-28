@@ -6,10 +6,14 @@ import { OchessWebSocket } from "./client";
 import { userId } from "./user";
 
 // TODO:
-// fetch legal moves from the server
-// fix funky chessground (im lazy to understand its API)
-// resign (I mean in chess)
-// player online, spectator count, etc
+// offer draw
+// player online, spectators, etc
+
+// TODO: keyboard input!
+
+/**
+ * @typedef {import("chessground/types").Key} Key
+ */
 
 /**
  *  @typedef Game
@@ -17,10 +21,14 @@ import { userId } from "./user";
  *  @property {number?} whiteId
  *  @property {number?} blackId,
  *  @property {"waiting" | "playing" | "ended"} stage,
- *  @property {"checkmate" | "draw" | "resign" | "abandoned"} result,
- *  @property {"white" | "black"} winner,
+ *  @property {"checkmate" | "draw" | "resign" | "abandoned" | null} result,
+ *  @property {Color?} winner,
  *  @property {string} fen,
  *  @property {Array<{move: string}>} moves,
+ */
+
+/**
+ *  @typedef {"white" | "black"} Color
  */
 
 export default function Game() {
@@ -30,8 +38,8 @@ export default function Game() {
   let game = {};
   game.id = gameId;
 
-  /** @type {"white" | "black" | null} */
-  let myColor = null;
+  /** @type {string[]} */
+  let keystack = [];
 
   /** @type {import("chessground/api").Api | null} */
   let cg;
@@ -42,7 +50,7 @@ export default function Game() {
     client.sendMsg({
       type: "auth",
       userId: userId,
-    })
+    });
     client.sendMsg({
       type: "fetch_game",
     });
@@ -70,74 +78,104 @@ export default function Game() {
     m.redraw();
   };
 
-  function getTurn() {
+  window.addEventListener("keydown", event => {
+    const key = event.key;
+    if (key == "Escape") {
+      keystack = [];
+      m.redraw();
+      return;
+    }
+
+    // prettier-ignore
+    const moveKeys = [
+      "a", "b", "c", "d", "e", "f", "g", "h",
+      "1", "2", "3", "4", "5", "6", "7", "8"
+    ];
+    if (!moveKeys.includes(key)) return;
+
+    if (keystack.length < 4) {
+      keystack.push(key);
+    }
+
+    if (keystack.length === 4 && myColor() === whichTurn()) {
+      makeMove(keystack.slice(0, 2).join(""), keystack.slice(2, 4).join(""));
+      keystack = [];
+    }
+    m.redraw();
+  });
+
+  function whichTurn() {
     if (!game.moves) return undefined;
-    return game.moves.length % 2 === 0 ? "white" : "black" ;
+    return game.moves.length % 2 === 0 ? "white" : "black";
   }
 
-  /** 
-    * @param {Game} gameUpdated
-    */
+  function myColor() {
+    switch (userId) {
+      case game.whiteId:
+        return "white";
+      case game.blackId:
+        return "black";
+    }
+  }
+
+  /**
+   * @param {any} gameUpdated
+   */
   function updateGame(gameUpdated) {
     // update full state of the game, so even if we reconnected, we get valid state
-    game.id = gameUpdated["id"];
-    game.whiteId = gameUpdated["whiteId"];
-    game.blackId = gameUpdated["blackId"];
+    game.id = parseInt(gameUpdated["id"]);
+    game.whiteId = parseInt(gameUpdated["whiteId"]);
+    game.blackId = parseInt(gameUpdated["blackId"]);
     game.stage = gameUpdated["stage"];
     game.result = gameUpdated["result"];
     game.winner = gameUpdated["winner"];
     game.fen = gameUpdated["fen"];
     game.moves = gameUpdated["moves"];
 
-    switch (userId) {
-      case game.whiteId:
-        myColor = "white";
-        break;
-      case game.blackId:
-        myColor = "black";
-        break;
-      default:
-        myColor = null;
-    }
-    console.assert(cg !== null);
+    if (cg === null) throw new Error("cg === null");
+
+    const lastMove = game.moves[game.moves.length - 1]?.move;
+    const lastMoveKeys = lastMove
+      ? /** @type {Key[] | undefined} */ ([
+          lastMove.slice(0, 2),
+          lastMove.slice(2, 4),
+        ])
+      : undefined;
     cg.set({
-      orientation: myColor ?? "white",
-      turnColor: getTurn(),
+      orientation: myColor() ?? "white",
+      lastMove: lastMoveKeys,
       fen: game.fen,
       movable: {
-        free: true, // TODO: request dests and set them
-        color: getTurn(),
+        free: false,
       },
     });
-    if (game.stage !== "playing" && game.stage !== "waiting") {
-      cg.set({
-        movable: {
-          free: false,
-        },
-      });
-    }
   }
 
-  function makeMove(orig, dest) {
-    cg.set({
-      movable: {
-        color: undefined, // lock right after our move
-      },
-    });
+  /**
+   * @param {string} orig
+   * @param {string} dest
+   * @param {string?} promo
+   * */
+  function makeMove(orig, dest, promo = null) {
     client.sendMsg({
       type: "make_move",
-        move: orig + dest,
+      move: orig + dest,
+    });
+  }
+
+  function resign() {
+    client.sendMsg({
+      type: "resign",
     });
   }
 
   function init() {
-    const el = document.querySelector(".cg-wrap");
-    cg = Chessground(el, { movable: false });
-    cg.set({
+    const el = /** @type {HTMLInputElement} */ (
+      document.querySelector(".cg-wrap")
+    );
+    cg = Chessground(el, {
       movable: {
-        events: {
-          after: (orig, dest, _) => makeMove(orig, dest),
-        },
+        free: false,
       },
     });
     client.connect();
@@ -146,14 +184,20 @@ export default function Game() {
   return {
     view: () => [
       m(NavBar),
-      m("section.blue.merida", m("div.cg-wrap", { oncreate: init })),
+      m(
+        ".center",
+        m(
+          "section.blue.merida",
+          m("div.cg-wrap", {
+            oncreate: init,
+          }),
+        ),
+      ),
+      m("p", keystack),
       m("p", "Game: ", JSON.stringify(game)),
-      m("p", "My color: ", myColor),
+      m("p", "My color: ", myColor()),
       m("p", "My ID: ", userId),
-      m("p", "Game ID: ", gameId),
-      m("p", "White: ", game.whiteId),
-      m("p", "Black: ", game.blackId),
-      game.moves ? m("p", "Moves: ", game.moves.map(m => m.move).join(", ")) : '',
+      m("button", { onclick: () => resign() }, "Resign"),
     ],
   };
 }

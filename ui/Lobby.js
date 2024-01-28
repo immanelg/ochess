@@ -9,13 +9,27 @@ import NavBar from "./Navbar";
  * @property {number} gameId
  * @property {number?} whiteId
  * @property {number?} blackId
-*/
-
+ */
 
 export default function Lobby() {
-
   /** @type {Invite[]} */
   let invites = [];
+  // debug
+  // invites.push({
+  //   gameId: 1,
+  //   whiteId: 2,
+  //   blackId: 3,
+  // });
+  // invites.push({
+  //   gameId: 1,
+  //   whiteId: 2,
+  //   blackId: 3,
+  // });
+  // invites.push({
+  //   gameId: 1,
+  //   whiteId: 2,
+  //   blackId: 3,
+  // });
 
   const client = new OchessWebSocket("lobby");
 
@@ -35,14 +49,17 @@ export default function Lobby() {
       case "create_game":
         invites.push({
           gameId: parseInt(msg["gameId"]),
-          whiteId: parseInt(msg["whiteId"]),
-          blackId: parseInt(msg["blackId"]),
+          whiteId: parseInt(msg["whiteId"]) || null,
+          blackId: parseInt(msg["blackId"]) || null,
         });
         console.table(invites);
         break;
       case "accept_game":
         // did someone just accept our invite 👉👈?
-        if (userId === parseInt(msg["whiteId"]) || userId === parseInt(msg["blackId"])) {
+        if (
+          userId === parseInt(msg["whiteId"]) ||
+          userId === parseInt(msg["blackId"])
+        ) {
           console.log("Our game was accepted", msg);
           client.close();
           m.route.set(`/game/${msg["gameId"]}`);
@@ -119,22 +136,22 @@ export default function Lobby() {
         "table.invites",
         m(
           "thead",
-          m("tr", m("th", "color"), m("th", "player"), m("th", "game")),
+          m("tr", m("th", "Color"), m("th", "Player ID"), m("th", "Game ID")),
         ),
         m(
           "tbody",
-          invites.map(row =>
+          invites.map(game =>
             m(
               "tr",
               {
                 onclick: () =>
-                  clickInvite(row.whiteId ?? row.blackId, row.gameId),
-                key: row.gameId,
+                  clickInvite(game.whiteId ?? game.blackId, game.gameId),
+                key: game.gameId,
               },
 
-              m("td", row.whiteId ? "white" : "black"),
-              m("td", row.whiteId ?? row.blackId),
-              m("td", row.gameId),
+              m("td", game.whiteId ? "white" : "black"),
+              m("td", game.whiteId ?? game.blackId),
+              m("td", game.gameId),
             ),
           ),
         ),
@@ -146,7 +163,14 @@ export default function Lobby() {
           {
             onclick: () => create(null),
           },
-          "New Game",
+          "Create Game",
+        ),
+        m(
+          "button",
+          {
+            onclick: () => alert("todo!"),
+          },
+          "Play with friend",
         ),
       ),
     ],

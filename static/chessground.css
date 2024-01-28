@@ -1,8 +1,9 @@
 .cg-wrap {
-  width: 320px;
-  height: 320px;
+  width: 400px;
+  height: 400px;
   position: relative;
   display: block;
+  margin: 5px;
 }
 
 cg-helper {
