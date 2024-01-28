@@ -12,27 +12,35 @@ Setting up:
 # Clone the repository
 git clone git@github.com:immanelg/ochess.git && cd ochess
 
-# Create `.env`
+# Create .env
 cp example.env .env
 
 # Install python dependencies 
 pdm sync
 
-# Run database migrations (via `alembic`)
-pdm run migrate-db -m "init"
-pdm run upgrade-db
+# Upgrade postgres database to the latest alembic version
+pdm run db-upgrade
 
 # Install Node dependencies
 npm install
 ```
 
-Other available commands:
+Available commands:
 ```bash
 # Start development server (on 127.0.0.1:8000)
 pdm run serve-dev
 
 # Run backend tests
 pdm run test
+
+# Generate new alembic migration
+pdm run db-migration 
+
+# Upgrade database to the latest revision
+pdm run db-upgrade
+
+# Rollback database 
+pdm run db-downgrade
 
 # Run ruff formatting and linting
 pdm run fmt
@@ -42,10 +50,10 @@ pdm run check
 # Build JS bundle
 npm run build
 
-# Build and watch changes
+# Build bundle with automatic reloading
 npm run watch
 
-# Format code
+# Format JS code
 npm run fmt
 ```
 
