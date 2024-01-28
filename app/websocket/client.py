@@ -1,4 +1,5 @@
 from typing import Any, Awaitable, Callable, TypeAlias
+import sys
 
 from starlette.websockets import WebSocket
 
@@ -31,15 +32,15 @@ class Client:
     async def receive_loop(self) -> None:
         try:
             async for message in self.socket.iter_json():
-                logger.info("message from %s: %s", self.user_id, message)
+                logger.info("message user_id=%s %s", self.user_id, message)
                 await self._on_message(message)
         except Exception:
             await self.socket.send_json(
                 schemas.ErrorResponse(
-                    type="error", detail="internal error, closing socket"
+                    type="error", detail="internal server error"
                 ).model_dump()
             )
-            raise 
+            logger.error("exception while processing a message from user %s", self.user_id, exc_info=sys.exc_info())
 
 
     async def _on_message(self, data: Data) -> None:
