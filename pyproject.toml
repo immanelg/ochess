@@ -30,7 +30,7 @@ db-upgrade = "alembic upgrade head"
 db-downgrade = "alembic downgrade {args}"
 lint = "ruff check app/ --fix"
 check = "ruff check app/"
-fmt = ["ruff format app/ tests/"]
+fmt = "ruff format app/ tests/"
 test = "pytest tests/"
 
 [tool.pdm.dev-dependencies]
@@ -41,6 +41,7 @@ test = [
     "async-asgi-testclient",
 ]
 lint = [
+	"pre-commit",
     "ruff",
 ]
 
