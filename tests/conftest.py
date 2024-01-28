@@ -4,7 +4,6 @@ from typing import AsyncGenerator, Generator
 import pytest
 import pytest_asyncio
 from async_asgi_testclient import TestClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.database import engine
 from app.main import app

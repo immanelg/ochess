@@ -2,13 +2,11 @@ from __future__ import annotations
 
 import random
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app import chess_service, schemas
 from app.constants import Color, Result, Stage
 from app.database import models
-from app.exception import ClientError
 from app.database.database import get_session
+from app.exception import ClientError
 
 
 class BaseService:
@@ -31,7 +29,7 @@ class GameService(BaseService):
     async def create_game(
         self,
         user_id: int,
-        data: schemas.CreateGameRequest,
+        data: schemas.CreateGame,
     ) -> models.Game:
         async with get_session() as session:
             if data.white is None:
@@ -47,7 +45,7 @@ class GameService(BaseService):
     async def accept_game(
         self,
         user_id: int,
-        data: schemas.AcceptGameRequest,
+        data: schemas.AcceptGame,
     ) -> models.Game:
         async with get_session() as session:
             game_id = data.game_id
@@ -72,7 +70,7 @@ class GameService(BaseService):
     async def cancel_game(
         self,
         user_id: int,
-        data: schemas.CancelGameRequest,
+        data: schemas.CancelGame,
     ) -> models.Game:
         async with get_session() as session:
             game = await session.get(models.Game, data.game_id)
@@ -91,7 +89,7 @@ class GameService(BaseService):
         self,
         user_id: int,
         game_id: int,
-        data: schemas.MakeMoveRequest,
+        data: schemas.MakeMove,
     ) -> models.Game:
         async with get_session() as session:
             game = await session.get(models.Game, game_id)

@@ -1,9 +1,8 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import schemas
 from app.constants import Color, Result, Stage
-from app.database import models, service
+from app.database import service
 
 
 @pytest.mark.asyncio
@@ -15,19 +14,19 @@ async def test_database_service() -> None:
     user_2 = await user_repo.create_or_get_user(2)
 
     game = await game_repo.create_game(
-        user_1.id, schemas.CreateGameRequest(type="create_game", white=True)
+        user_1.id, schemas.CreateGame(type="create_game", white=True)
     )
     assert game.white_id == user_1.id
     assert game.stage == Stage.waiting
     game = await game_repo.accept_game(
-        user_2.id, schemas.AcceptGameRequest(type="accept_game", game_id=game.id)
+        user_2.id, schemas.AcceptGame(type="accept_game", game_id=game.id)
     )
 
     game = await game_repo.make_move(
-        user_1.id, game.id, schemas.MakeMoveRequest(type="make_move", move="e2e4")
+        user_1.id, game.id, schemas.MakeMove(type="make_move", move="e2e4")
     )
     game = await game_repo.make_move(
-        user_2.id, game.id, schemas.MakeMoveRequest(type="make_move", move="c7c5")
+        user_2.id, game.id, schemas.MakeMove(type="make_move", move="c7c5")
     )
     game = await game_repo.fetch_game(game.id)
     assert game is not None

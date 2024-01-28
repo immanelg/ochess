@@ -4,7 +4,6 @@ from typing import Any, Awaitable, Callable, TypeAlias
 from starlette.websockets import WebSocket
 
 from app import schemas
-from app.database.database import get_session
 from app.database.service import GameService, UserService
 from app.exception import ClientError
 from app.logging import logger
@@ -109,10 +108,10 @@ class LobbyClient(Client):
         # when client connects, check if appropriate invite
         # alrady exists and immediatly accept it
         service = GameService()
-        data_schema = schemas.CreateGameRequest(**data)
+        data_schema = schemas.CreateGame(**data)
         assert self.user_id
         game_orm = await service.create_game(self.user_id, data_schema)
-        resp = schemas.CreateGameResponse(
+        resp = schemas.CreateGameResp(
             type="create_game",
             white_id=game_orm.white_id,
             black_id=game_orm.black_id,
@@ -121,11 +120,11 @@ class LobbyClient(Client):
         await broadcast.publish(channel="lobby", message=resp.json())
 
     async def _accept_game(self, data: Data) -> None:
-        data_schema = schemas.AcceptGameRequest(**data)
+        data_schema = schemas.AcceptGame(**data)
         assert self.user_id
         service = GameService()
         game_orm = await service.accept_game(self.user_id, data_schema)
-        resp = schemas.AcceptGameResponse(
+        resp = schemas.AcceptGameResp(
             type="accept_game",
             white_id=game_orm.white_id,
             black_id=game_orm.black_id,
@@ -135,11 +134,11 @@ class LobbyClient(Client):
         await broadcast.publish(channel="lobby", message=resp.json())
 
     async def _cancel_game(self, data: Data) -> None:
-        data_schema = schemas.CancelGameRequest(**data)
+        data_schema = schemas.CancelGame(**data)
         assert self.user_id
         service = GameService()
         game_orm = await service.cancel_game(self.user_id, data_schema)
-        resp = schemas.CancelGameResponse(type="cancel_game", game_id=game_orm.id)
+        resp = schemas.CancelGame(type="cancel_game", game_id=game_orm.id)
         await broadcast.publish(channel="lobby", message=resp.json())
 
     async def _get_waiting_games(self, data: Data) -> None:
@@ -163,7 +162,7 @@ class GameClient(Client):
 
         self.handlers |= {
             "make_move": self._make_move,
-            "reconnect_game": self._reconnect,
+            "reconnect": self._reconnect,
             "fetch_game": self._fetch_game,
             "resign": self._resign,
             # "claim_draw": self.claim_draw,
@@ -171,20 +170,20 @@ class GameClient(Client):
         }
 
     async def _make_move(self, data: Data) -> None:
-        data_schema = schemas.MakeMoveRequest(**data)
+        data_schema = schemas.MakeMove(**data)
         assert self.user_id
         assert self.game_id
         service = GameService()
         game_orm = await service.make_move(self.user_id, self.game_id, data_schema)
-        resp = schemas.GameResponse(type="game", game=game_orm)  # type: ignore
+        resp = schemas.GameResp(type="game", game=game_orm)  # type: ignore
         await broadcast.publish(channel=str(self.game_id), message=resp.json())
 
     async def _resign(self, data: Data) -> None:
-        _ = schemas.ResignRequest(**data)
+        _ = schemas.Resign(**data)
         assert self.user_id
         service = GameService()
         game_orm = await service.resign(self.user_id, self.game_id)
-        resp = schemas.GameResponse(
+        resp = schemas.GameResp(
             type="game",
             game=game_orm,  # type: ignore
         )
@@ -195,15 +194,20 @@ class GameClient(Client):
 
     async def _fetch_game(self, data: Data) -> None:
         assert self.user_id
-        _ = schemas.FetchGameRequest(**data)
+        _ = schemas.FetchGame(**data)
         service = GameService()
         game_orm = await service.fetch_game(self.game_id)
-        resp = schemas.GameResponse(
+        resp = schemas.GameResp(
             type="game",
             game=game_orm,  # type: ignore
         )
         await self.socket.send_text(resp.json())
 
-    async def _reconnect(self, message: Data):
-        # TODO: broadcast connect/disconnect so everyone can see if a player is present or not
-        ...
+    async def _reconnect(self, data: Data) -> None:
+        _ = schemas.Reconnect(**data)
+        assert self.user_id
+        resp = schemas.ReconnectResp(type="reconnect", user_id=self.user_id)
+        await broadcast.publish(
+            channel=str(self.game_id),
+            message=resp.json(),
+        )

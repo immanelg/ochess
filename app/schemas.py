@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
-from app.constants import Result, Stage, Color
+from app.constants import Color, Result, Stage
 
 
 class _BaseSchema(BaseModel):
@@ -50,7 +50,6 @@ class ErrorResponse(_BaseSchema):
     detail: str
 
 
-# dummy auth
 class AuthRequest(_BaseSchema):
     type: Literal["auth"]
     user_id: int
@@ -66,45 +65,45 @@ class AuthOk(_BaseSchema):
 #     request: Annotated[CreateGameRequest | AcceptGameRequest | CancelGameRequest, Field(discriminator="type")]
 
 
-class CreateGameRequest(_BaseSchema):
+class CreateGame(_BaseSchema):
     type: Literal["create_game"]
     white: bool | None = None
 
 
-class CreateGameResponse(_BaseSchema):
+class CreateGameResp(_BaseSchema):
     type: Literal["create_game"]
     white_id: int | None
     black_id: int | None
     game_id: int
 
 
-class AcceptGameRequest(_BaseSchema):
+class AcceptGame(_BaseSchema):
     type: Literal["accept_game"]
     game_id: int
 
 
-class AcceptGameResponse(_BaseSchema):
+class AcceptGameResp(_BaseSchema):
     type: Literal["accept_game"]
     white_id: int | None
     black_id: int | None
     game_id: int
 
 
-class CancelGameRequest(_BaseSchema):
+class CancelGame(_BaseSchema):
     type: Literal["cancel_game"]
     game_id: int
 
 
-class CancelGameResponse(_BaseSchema):
+class CancelGameResp(_BaseSchema):
     type: Literal["cancel_game"]
     game_id: int
 
 
-class GetWaitingGamesRequest(_BaseSchema):
+class WaitingGames(_BaseSchema):
     type: Literal["get_waiting_games"]
 
 
-class GetWaitingGamesResponse(_BaseSchema):
+class WaitingGamesResp(_BaseSchema):
     type: Literal["get_waiting_games"]
     games: list[_WaitingGame] = []
 
@@ -118,29 +117,29 @@ class _WaitingGame(_BaseSchema):
 # game channels
 
 
-class MakeMoveRequest(_BaseSchema):
+class MakeMove(_BaseSchema):
     type: Literal["make_move"]
     move: str
     # time
 
 
-class FetchGameRequest(_BaseSchema):
+class FetchGame(_BaseSchema):
     type: Literal["fetch_game"]
 
 
-class GameResponse(_BaseSchema):
+class GameResp(_BaseSchema):
     type: Literal["game"]
     game: Game
 
 
-class ResignRequest(_BaseSchema):
+class Resign(_BaseSchema):
     type: Literal["resign"]
 
 
-class ReconnectRequest(_BaseSchema):
+class Reconnect(_BaseSchema):
     type: Literal["reconnect"]
 
 
-class ReconnectResponse(_BaseSchema):
+class ReconnectResp(_BaseSchema):
     type: Literal["reconnect"]
     user_id: int
