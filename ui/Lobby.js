@@ -14,22 +14,6 @@ import NavBar from "./Navbar";
 export default function Lobby() {
   /** @type {Invite[]} */
   let invites = [];
-  // debug
-  // invites.push({
-  //   gameId: 1,
-  //   whiteId: 2,
-  //   blackId: 3,
-  // });
-  // invites.push({
-  //   gameId: 1,
-  //   whiteId: 2,
-  //   blackId: 3,
-  // });
-  // invites.push({
-  //   gameId: 1,
-  //   whiteId: 2,
-  //   blackId: 3,
-  // });
 
   const client = new OchessWebSocket("lobby");
 
