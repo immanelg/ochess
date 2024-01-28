@@ -16,6 +16,9 @@ Handler: TypeAlias = Callable[[Data], Awaitable[None]]
 # TODO: send && receive camelCase in pydantic models
 
 class Client:
+    """
+    A wrapper for websocket connection that handles authentication, loops and dispatches messages from socket.
+    """
     user_id: int | None = None
     socket: WebSocket
     handlers: dict[str, Handler]
@@ -35,10 +38,10 @@ class Client:
                 logger.info("message user_id=%s %s", self.user_id, message)
                 await self._on_message(message)
         except Exception:
-            await self.socket.send_json(
+            await self.socket.send_text(
                 schemas.ErrorResponse(
                     type="error", detail="internal server error"
-                ).model_dump()
+                ).json()
             )
             logger.error("exception while processing a message from user %s", self.user_id, exc_info=sys.exc_info())
 
@@ -47,10 +50,10 @@ class Client:
         message_type = data.get("type", None)
         handle: Handler | None = self.handlers.get(message_type)
         if handle is None:
-            await self.socket.send_json(
+            await self.socket.send_text(
                 schemas.ErrorResponse(
                     type="error", detail=f"unknown message type, should have correct `type` field in message: {data}"
-                ).model_dump()
+                ).json()
             )
             return
 
@@ -58,10 +61,10 @@ class Client:
             logger.debug("calling handler %s", handle.__name__)
             await handle(data)
         except ClientError as error:
-            await self.socket.send_json(
+            await self.socket.send_text(
                 schemas.ErrorResponse(
                     type="error", detail=f"client error: {error.detail}",
-                ).model_dump()
+                ).json()
             )
 
     async def _auth(self, data: Data) -> None:
@@ -71,8 +74,8 @@ class Client:
         await service.create_or_get_user(id=data_schema.user_id)
         self.user_id = data_schema.user_id
         resp = schemas.AuthOk(type="auth_ok")
-        logger.debug("auth send %s", resp.model_dump())
-        await self.socket.send_json(resp.model_dump())
+        logger.debug("auth send %s", resp.json())
+        await self.socket.send_text(resp.json())
 
 
 class LobbyClient(Client):
@@ -107,7 +110,7 @@ class LobbyClient(Client):
             black_id=game_orm.black_id,
             game_id=game_orm.id,
         )
-        await broadcast.publish(channel="lobby", message=resp.model_dump())
+        await broadcast.publish(channel="lobby", message=resp.json())
 
     async def _accept_game(self, data: Data) -> None:
         data_schema = schemas.AcceptGameRequest(**data)
@@ -121,7 +124,7 @@ class LobbyClient(Client):
             game_id=game_orm.id,
         )
 
-        await broadcast.publish(channel="lobby", message=resp.model_dump())
+        await broadcast.publish(channel="lobby", message=resp.json())
 
     async def _cancel_game(self, data: Data) -> None:
         data_schema = schemas.CancelGameRequest(**data)
@@ -129,7 +132,7 @@ class LobbyClient(Client):
         service = GameService(get_session())
         game_orm = await service.cancel_game(self.user_id, data_schema)
         resp = schemas.CancelGameResponse(type="cancel_game", game_id=game_orm.id)
-        await broadcast.publish(channel="lobby", message=resp.model_dump())
+        await broadcast.publish(channel="lobby", message=resp.json())
 
     async def _get_waiting_games(self, data: Data) -> None:
         # TODO
@@ -166,7 +169,7 @@ class GameClient(Client):
         service = GameService(get_session())
         game_orm = await service.make_move(self.user_id, self.game_id, data_schema)
         resp = schemas.GameResponse(type="game", game=game_orm)  # type: ignore
-        await broadcast.publish(channel=str(self.game_id), message=resp.model_dump())
+        await broadcast.publish(channel=str(self.game_id), message=resp.json())
 
     async def _resign(self, data: Data) -> None:
         _ = schemas.ResignRequest(**data)
@@ -179,7 +182,7 @@ class GameClient(Client):
         )
         await broadcast.publish(
             channel=str(self.game_id),
-            message=resp.model_dump(),
+            message=resp.json(),
         )
 
     async def _fetch_game(self, data: Data) -> None:
@@ -191,7 +194,7 @@ class GameClient(Client):
             type="game",
             game=game_orm,  # type: ignore
         )
-        await self.socket.send_json(resp.model_dump())
+        await self.socket.send_text(resp.json())
 
     async def _reconnect(self, message: Data):
         # TODO: broadcast connect/disconnect so everyone can see if a player is present or not

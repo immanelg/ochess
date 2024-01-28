@@ -41,7 +41,7 @@ export default function Game() {
   client.onConnect = () => {
     client.sendMsg({
       type: "auth",
-      user_id: userId,
+      userId: userId,
     })
     client.sendMsg({
       type: "fetch_game",
@@ -81,8 +81,8 @@ export default function Game() {
   function updateGame(gameUpdated) {
     // update full state of the game, so even if we reconnected, we get valid state
     game.id = gameUpdated["id"];
-    game.whiteId = gameUpdated["white_id"];
-    game.blackId = gameUpdated["black_id"];
+    game.whiteId = gameUpdated["whiteId"];
+    game.blackId = gameUpdated["blackId"];
     game.stage = gameUpdated["stage"];
     game.result = gameUpdated["result"];
     game.winner = gameUpdated["winner"];
@@ -153,7 +153,7 @@ export default function Game() {
       m("p", "Game ID: ", gameId),
       m("p", "White: ", game.whiteId),
       m("p", "Black: ", game.blackId),
-      game.moves ? m("p", "Moves: ", game.moves.map(m => m.move).join(",")) : '',
+      game.moves ? m("p", "Moves: ", game.moves.map(m => m.move).join(", ")) : '',
     ],
   };
 }

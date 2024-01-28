@@ -4,24 +4,26 @@ from typing import Literal
 
 from chess import Color
 from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
 
 from app.constants import Result, Stage
 
 
-def to_snake_case(name: str) -> str:
-    return "".join(["_" + ch.lower() if ch.isupper() else ch for ch in name]).lstrip(
-        "_"
-    )
-
-
-class BaseSchema(BaseModel):
+class _BaseSchema(BaseModel):
     model_config = ConfigDict(
-        from_attributes=True,  # orm_mode
-        alias_generator=to_snake_case,
+        from_attributes=True,
+        alias_generator=to_camel,
+        populate_by_name=True,
     )
 
+    def json(self) -> str:
+        """
+        Serialize to a JSON string with camelCase fields.
+        """
+        return self.model_dump_json(by_alias=True)
 
-class Game(BaseSchema):
+
+class Game(_BaseSchema):
     id: int
     white_id: int | None = None
     black_id: int | None = None
@@ -35,27 +37,27 @@ class Game(BaseSchema):
     # clocks: ...
 
 
-class User(BaseSchema):
+class User(_BaseSchema):
     id: int
     # rating
 
 
-class Move(BaseSchema):
+class Move(_BaseSchema):
     move: str
 
 
-class ErrorResponse(BaseSchema):
+class ErrorResponse(_BaseSchema):
     type: Literal["error"]
     detail: str
 
 
 # dummy auth
-class AuthRequest(BaseSchema):
+class AuthRequest(_BaseSchema):
     type: Literal["auth"]
     user_id: int
 
 
-class AuthOk(BaseSchema):
+class AuthOk(_BaseSchema):
     type: Literal["auth_ok"]
 
 
@@ -65,50 +67,50 @@ class AuthOk(BaseSchema):
 #     request: Annotated[CreateGameRequest | AcceptGameRequest | CancelGameRequest, Field(discriminator="type")]
 
 
-class CreateGameRequest(BaseSchema):
+class CreateGameRequest(_BaseSchema):
     type: Literal["create_game"]
     white: bool | None = None
 
 
-class CreateGameResponse(BaseSchema):
+class CreateGameResponse(_BaseSchema):
     type: Literal["create_game"]
     white_id: int | None
     black_id: int | None
     game_id: int
 
 
-class AcceptGameRequest(BaseSchema):
+class AcceptGameRequest(_BaseSchema):
     type: Literal["accept_game"]
     game_id: int
 
 
-class AcceptGameResponse(BaseSchema):
+class AcceptGameResponse(_BaseSchema):
     type: Literal["accept_game"]
     white_id: int | None
     black_id: int | None
     game_id: int
 
 
-class CancelGameRequest(BaseSchema):
+class CancelGameRequest(_BaseSchema):
     type: Literal["cancel_game"]
     game_id: int
 
 
-class CancelGameResponse(BaseSchema):
+class CancelGameResponse(_BaseSchema):
     type: Literal["cancel_game"]
     game_id: int
 
 
-class GetWaitingGamesRequest(BaseSchema):
+class GetWaitingGamesRequest(_BaseSchema):
     type: Literal["get_waiting_games"]
 
 
-class GetWaitingGamesResponse(BaseSchema):
+class GetWaitingGamesResponse(_BaseSchema):
     type: Literal["get_waiting_games"]
     games: list[_WaitingGame] = []
 
 
-class _WaitingGame(BaseSchema):
+class _WaitingGame(_BaseSchema):
     white_id: int | None = None
     black_id: int | None = None
     game_id: int
@@ -117,29 +119,29 @@ class _WaitingGame(BaseSchema):
 # game channels
 
 
-class MakeMoveRequest(BaseSchema):
+class MakeMoveRequest(_BaseSchema):
     type: Literal["make_move"]
     move: str
     # time
 
 
-class FetchGameRequest(BaseSchema):
+class FetchGameRequest(_BaseSchema):
     type: Literal["fetch_game"]
 
 
-class GameResponse(BaseSchema):
+class GameResponse(_BaseSchema):
     type: Literal["game"]
     game: Game
 
 
-class ResignRequest(BaseSchema):
+class ResignRequest(_BaseSchema):
     type: Literal["resign"]
 
 
-class ReconnectRequest(BaseSchema):
+class ReconnectRequest(_BaseSchema):
     type: Literal["reconnect"]
 
 
-class ReconnectResponse(BaseSchema):
+class ReconnectResponse(_BaseSchema):
     type: Literal["reconnect"]
     user_id: int

@@ -20,7 +20,7 @@ export default function Lobby() {
   const client = new OchessWebSocket("lobby");
 
   client.onConnect = _ => {
-    client.sendMsg({ type: "auth", user_id: userId });
+    client.sendMsg({ type: "auth", userId: userId });
     // client.sendMsg({
     //   type: "get_waiting_games",
     // });
@@ -34,25 +34,25 @@ export default function Lobby() {
         break;
       case "create_game":
         invites.push({
-          gameId: parseInt(msg["game_id"]),
-          whiteId: parseInt(msg["white_id"]),
-          blackId: parseInt(msg["black_id"]),
+          gameId: parseInt(msg["gameId"]),
+          whiteId: parseInt(msg["whiteId"]),
+          blackId: parseInt(msg["blackId"]),
         });
         console.table(invites);
         break;
       case "accept_game":
         // did someone just accept our invite 👉👈?
-        if (userId === parseInt(msg["white_id"]) || userId === parseInt(msg["black_id"])) {
+        if (userId === parseInt(msg["whiteId"]) || userId === parseInt(msg["blackId"])) {
           console.log("Our game was accepted", msg);
           client.close();
-          m.route.set(`/game/${msg["game_id"]}`);
+          m.route.set(`/game/${msg["gameId"]}`);
         }
-        invites = invites.filter(inv => inv.gameId !== msg["game_id"]);
+        invites = invites.filter(inv => inv.gameId !== msg["gameId"]);
         console.log("Someone accepted an invite!");
         console.table(invites);
         break;
       case "cancel_game":
-        invites = invites.filter(inv => inv.gameId !== msg["game_id"]);
+        invites = invites.filter(inv => inv.gameId !== msg["gameId"]);
         console.log("Invite is cancelled");
         console.table(invites);
         break;
@@ -87,7 +87,7 @@ export default function Lobby() {
     console.log("Accepted invite");
     client.sendMsg({
       type: "accept_game",
-      game_id: gameId,
+      gameId: gameId,
     });
   }
 
@@ -98,7 +98,7 @@ export default function Lobby() {
     console.log("Cancelling invite");
     client.sendMsg({
       type: "cancel_game",
-      game_id: gameId,
+      gameId: gameId,
     });
   }
 

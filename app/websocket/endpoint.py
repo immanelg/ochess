@@ -40,7 +40,7 @@ async def _subscribe(socket: WebSocket) -> None:
     async with broadcast.subscribe(channel=str(channel)) as subscriber:
         async for event in subscriber:
             message = event.message
-            await socket.send_json(message)
+            await socket.send_text(message)
 
 
 async def _receive(ws: WebSocket) -> None:
