@@ -8,7 +8,7 @@ export class OchessWebSocket {
    * @param {string} url
    */
   constructor(url) {
-    this.baseurl = "ws://127.0.0.1:8000/ws/";
+    this.baseurl = `ws://${window.location.host}/ws/`;
     this.url = this.baseurl + url;
     window["ochessSocket"] = this;
   }
@@ -24,18 +24,15 @@ export class OchessWebSocket {
     this.ws.onmessage = event => {
       const text = event.data;
       const msg = JSON.parse(text);
-      console.log("Got message", msg);
       this.onMsg(msg);
     };
 
     this.ws.onclose = event => {
-      console.log("Closing", event);
       this.onClose(event);
       this.reconnect(10);
     };
 
     this.ws.onerror = event => {
-      console.log("Error", event);
       this.onError(event);
       this.ws.close();
     };
@@ -45,8 +42,8 @@ export class OchessWebSocket {
    * @param sec {number}
    **/
   reconnect = sec => {
+    console.log(`Reconnecting after ${sec}s...`);
     setTimeout(() => {
-      console.log(`Reconnecting after ${sec}s`);
       this.connect();
     }, 1000 * sec);
   };
@@ -67,19 +64,20 @@ export class OchessWebSocket {
   /**
    * @param msg {Object}
    */
-  onMsg(msg) {
-    // ...
-  }
+  onMsg(msg) {}
 
-  onConnect(event) {
-    // ...
-  }
+  /**
+   * @param {any} event
+   */
+  onConnect(event) {}
 
-  onClose(event) {
-    // ...
-  }
+  /**
+   * @param {any} event
+   */
+  onClose(event) {}
 
-  onError(event) {
-    // ...
-  }
+  /**
+   * @param {any} event
+   */
+  onError(event) {}
 }

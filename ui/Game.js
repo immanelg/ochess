@@ -52,6 +52,9 @@ export default function Game() {
       userId: userId,
     });
     client.sendMsg({
+      type: "reconnect",
+    })
+    client.sendMsg({
       type: "fetch_game",
     });
   };
@@ -62,14 +65,18 @@ export default function Game() {
         console.log("Pong!");
         client.sendMsg({ type: "ping" });
         break;
-      case "error":
-        console.log("Server sent error", msg);
+      case "auth_ok":
+        console.log("Authenticated", msg);
+        break;
+      case "reconnect":
+        console.log("User reconnected", msg);
         break;
       case "game":
         updateGame(msg.game);
+        maybeMove();  // premove if keys are pressed already
         break;
-      case "auth_ok":
-        console.log("Authenticated", msg);
+      case "error":
+        console.log("Server sent error", msg);
         break;
       default:
         console.log("Unknown message", msg);
@@ -77,6 +84,13 @@ export default function Game() {
     }
     m.redraw();
   };
+
+  function maybeMove() {
+    if (keystack.length === 4 && myColor() === whichTurn()) {
+      sendMove(keystack.slice(0, 2).join(""), keystack.slice(2, 4).join(""));
+      keystack = [];
+    }
+  }
 
   window.addEventListener("keydown", event => {
     const key = event.key;
@@ -97,10 +111,7 @@ export default function Game() {
       keystack.push(key);
     }
 
-    if (keystack.length === 4 && myColor() === whichTurn()) {
-      makeMove(keystack.slice(0, 2).join(""), keystack.slice(2, 4).join(""));
-      keystack = [];
-    }
+    maybeMove();
     m.redraw();
   });
 
@@ -156,7 +167,7 @@ export default function Game() {
    * @param {string} dest
    * @param {string?} promo
    * */
-  function makeMove(orig, dest, promo = null) {
+  function sendMove(orig, dest, promo = null) {
     client.sendMsg({
       type: "make_move",
       move: orig + dest,
