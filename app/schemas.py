@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from typing import Literal
 
-from chess import Color
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
-from app.constants import Result, Stage
+from app.constants import Result, Stage, Color
 
 
 class _BaseSchema(BaseModel):

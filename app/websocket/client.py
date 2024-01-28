@@ -1,5 +1,5 @@
-from typing import Any, Awaitable, Callable, TypeAlias
 import sys
+from typing import Any, Awaitable, Callable, TypeAlias
 
 from starlette.websockets import WebSocket
 
@@ -15,10 +15,12 @@ Handler: TypeAlias = Callable[[Data], Awaitable[None]]
 
 # TODO: send && receive camelCase in pydantic models
 
+
 class Client:
     """
     A wrapper for websocket connection that handles authentication, loops and dispatches messages from socket.
     """
+
     user_id: int | None = None
     socket: WebSocket
     handlers: dict[str, Handler]
@@ -43,16 +45,21 @@ class Client:
                     type="error", detail="internal server error"
                 ).json()
             )
-            logger.error("exception while processing a message from user %s", self.user_id, exc_info=sys.exc_info())
-
+            logger.error(
+                "exception while processing a message from user %s",
+                self.user_id,
+                exc_info=sys.exc_info(),
+            )
 
     async def _on_message(self, data: Data) -> None:
         message_type = data.get("type", None)
         handle: Handler | None = self.handlers.get(message_type)
         if handle is None:
+            logger.info("no handler for message %s", data)
             await self.socket.send_text(
                 schemas.ErrorResponse(
-                    type="error", detail=f"unknown message type, should have correct `type` field in message: {data}"
+                    type="error",
+                    detail=f"client error: unknown message type, got incorrect `type` field in message: {data}",
                 ).json()
             )
             return
@@ -61,20 +68,21 @@ class Client:
             logger.debug("calling handler %s", handle.__name__)
             await handle(data)
         except ClientError as error:
+            logger.info("client error %s", error.detail)
             await self.socket.send_text(
                 schemas.ErrorResponse(
-                    type="error", detail=f"client error: {error.detail}",
+                    type="error",
+                    detail=f"client error: {error.detail}",
                 ).json()
             )
 
     async def _auth(self, data: Data) -> None:
         # dummy implementation.
         data_schema = schemas.AuthRequest(**data)
-        service = UserService(get_session())
+        service = UserService()
         await service.create_or_get_user(id=data_schema.user_id)
         self.user_id = data_schema.user_id
         resp = schemas.AuthOk(type="auth_ok")
-        logger.debug("auth send %s", resp.json())
         await self.socket.send_text(resp.json())
 
 
@@ -100,7 +108,7 @@ class LobbyClient(Client):
         # TODO: automatic pairing
         # when client connects, check if appropriate invite
         # alrady exists and immediatly accept it
-        service = GameService(get_session())
+        service = GameService()
         data_schema = schemas.CreateGameRequest(**data)
         assert self.user_id
         game_orm = await service.create_game(self.user_id, data_schema)
@@ -115,7 +123,7 @@ class LobbyClient(Client):
     async def _accept_game(self, data: Data) -> None:
         data_schema = schemas.AcceptGameRequest(**data)
         assert self.user_id
-        service = GameService(get_session())
+        service = GameService()
         game_orm = await service.accept_game(self.user_id, data_schema)
         resp = schemas.AcceptGameResponse(
             type="accept_game",
@@ -129,7 +137,7 @@ class LobbyClient(Client):
     async def _cancel_game(self, data: Data) -> None:
         data_schema = schemas.CancelGameRequest(**data)
         assert self.user_id
-        service = GameService(get_session())
+        service = GameService()
         game_orm = await service.cancel_game(self.user_id, data_schema)
         resp = schemas.CancelGameResponse(type="cancel_game", game_id=game_orm.id)
         await broadcast.publish(channel="lobby", message=resp.json())
@@ -159,14 +167,14 @@ class GameClient(Client):
             "fetch_game": self._fetch_game,
             "resign": self._resign,
             # "claim_draw": self.claim_draw,
-            # "get_moves": self.get_moves, # do we calculate legal moves on client or server?
+            # "get_dests": self.get_dests, # maybe we want to send legal moves
         }
 
     async def _make_move(self, data: Data) -> None:
         data_schema = schemas.MakeMoveRequest(**data)
         assert self.user_id
         assert self.game_id
-        service = GameService(get_session())
+        service = GameService()
         game_orm = await service.make_move(self.user_id, self.game_id, data_schema)
         resp = schemas.GameResponse(type="game", game=game_orm)  # type: ignore
         await broadcast.publish(channel=str(self.game_id), message=resp.json())
@@ -174,7 +182,7 @@ class GameClient(Client):
     async def _resign(self, data: Data) -> None:
         _ = schemas.ResignRequest(**data)
         assert self.user_id
-        service = GameService(get_session())
+        service = GameService()
         game_orm = await service.resign(self.user_id, self.game_id)
         resp = schemas.GameResponse(
             type="game",
@@ -188,7 +196,7 @@ class GameClient(Client):
     async def _fetch_game(self, data: Data) -> None:
         assert self.user_id
         _ = schemas.FetchGameRequest(**data)
-        service = GameService(get_session())
+        service = GameService()
         game_orm = await service.fetch_game(self.game_id)
         resp = schemas.GameResponse(
             type="game",

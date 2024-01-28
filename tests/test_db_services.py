@@ -7,10 +7,10 @@ from app.database import models, service
 
 
 @pytest.mark.asyncio
-async def test_database_service(session: AsyncSession) -> None:
+async def test_database_service() -> None:
     # TODO: separate to unit tests instead of doing it all in one big run?
-    user_repo = service.UserService(session)
-    game_repo = service.GameService(session)
+    user_repo = service.UserService()
+    game_repo = service.GameService()
     user_1 = await user_repo.create_or_get_user(1)
     user_2 = await user_repo.create_or_get_user(2)
 
@@ -23,14 +23,13 @@ async def test_database_service(session: AsyncSession) -> None:
         user_2.id, schemas.AcceptGameRequest(type="accept_game", game_id=game.id)
     )
 
-    await session.refresh(game)
     game = await game_repo.make_move(
         user_1.id, game.id, schemas.MakeMoveRequest(type="make_move", move="e2e4")
     )
     game = await game_repo.make_move(
         user_2.id, game.id, schemas.MakeMoveRequest(type="make_move", move="c7c5")
     )
-    game = await session.get(models.Game, game.id)
+    game = await game_repo.fetch_game(game.id)
     assert game is not None
     assert game.stage == Stage.playing
     assert game.result == None

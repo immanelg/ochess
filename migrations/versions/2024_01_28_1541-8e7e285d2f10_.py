@@ -20,8 +20,8 @@ def upgrade() -> None:
     op.drop_column("move", "ply")
 
     from sqlalchemy.schema import DropSequence, Sequence
-    op.execute(DropSequence(Sequence('ply_seq')))
 
+    op.execute(DropSequence(Sequence("ply_seq")))
 
 
 def downgrade() -> None:
@@ -36,5 +36,5 @@ def downgrade() -> None:
         ),
     )
     from sqlalchemy.schema import CreateSequence, Sequence
-    op.execute(CreateSequence(Sequence('ply_seq')))
 
+    op.execute(CreateSequence(Sequence("ply_seq")))

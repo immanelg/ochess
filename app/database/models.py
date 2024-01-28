@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from chess import STARTING_FEN
-from sqlalchemy import ForeignKey, Sequence
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -57,6 +57,7 @@ class Game(Base, _Id):
 
 class Move(Base, _Id):
     game_id: Mapped[int] = mapped_column(ForeignKey("game.id"))
+    # TODO: divide uci move to three fields to three (from, to, promotion)
     move: Mapped[str]
     # created_at
 

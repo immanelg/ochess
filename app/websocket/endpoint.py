@@ -54,6 +54,7 @@ async def _receive(ws: WebSocket) -> None:
 
     await client.receive_loop()
 
+
 def _get_channel(socket: WebSocket) -> Any:
     game_id = socket.path_params.get("game_id")
     if game_id is not None:

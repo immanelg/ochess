@@ -43,9 +43,9 @@ async def client() -> AsyncGenerator[TestClient, None]:
         yield client
 
 
-@pytest_asyncio.fixture(scope="session")
-async def session() -> AsyncGenerator[AsyncSession, None]:
-    from app.database.database import get_session
-
-    async with get_session() as session:
-        yield session
+# @pytest_asyncio.fixture(scope="session")
+# async def session() -> AsyncGenerator[AsyncSession, None]:
+#     from app.database.database import get_session
+#
+#     async with get_session() as session:
+#         yield session

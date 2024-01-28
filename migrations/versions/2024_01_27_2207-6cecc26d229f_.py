@@ -18,7 +18,8 @@ depends_on = None
 def upgrade() -> None:
     # Need to add manually
     from sqlalchemy.schema import CreateSequence, Sequence
-    op.execute(CreateSequence(Sequence('ply_seq')))
+
+    op.execute(CreateSequence(Sequence("ply_seq")))
 
     op.create_table(
         "user",
@@ -80,4 +81,5 @@ def downgrade() -> None:
     op.drop_table("user")
 
     from sqlalchemy.schema import DropSequence, Sequence
-    op.execute(DropSequence(Sequence('ply_seq')))
+
+    op.execute(DropSequence(Sequence("ply_seq")))

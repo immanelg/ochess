@@ -2,7 +2,6 @@ import chess
 
 from app.constants import Color, Result, Stage
 from app.database import models
-from app.logging import logger
 from app.exception import ClientError
 
 
@@ -27,7 +26,6 @@ def try_move(game: models.Game, move: str, white: bool) -> models.Game:
     except chess.AmbiguousMoveError as e:
         raise ClientError(f"ambigious move {move}") from e
 
-
     if board.is_checkmate():
         game.stage = Stage.ended
         game.result = Result.checkmate
@@ -40,4 +38,3 @@ def try_move(game: models.Game, move: str, white: bool) -> models.Game:
     game.moves.append(models.Move(move=move))
 
     return game
-
