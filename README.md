@@ -16,7 +16,10 @@ git clone git@github.com:immanelg/ochess.git && cd ochess
 cp example.env .env
 
 # Install python dependencies 
-pdm sync
+pdm install -d
+
+# Install pre-commit
+pdm run pre-commit install 
 
 # Upgrade postgres database to the latest alembic version
 pdm run db-upgrade
