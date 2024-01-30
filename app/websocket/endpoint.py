@@ -5,7 +5,9 @@ from starlette.websockets import WebSocket
 
 from app.logging import logger
 from app.resources import broadcast
-from app.websocket.client import Client, GameClient, LobbyClient
+from app.websocket.client import Client
+from app.websocket.lobby import LobbyClient
+from app.websocket.game import GameClient
 
 
 async def websocket_listener(socket: WebSocket) -> None:
