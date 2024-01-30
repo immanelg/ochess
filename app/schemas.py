@@ -27,22 +27,29 @@ class Game(_BaseSchema):
     white_id: int | None = None
     black_id: int | None = None
 
+    fen: str
     stage: Stage | None = None
+
     result: Result | None = None
     winner: Color | None = None
 
-    fen: str
     moves: list[Move] = []
+
+    # created_at: datetime
+
     # clocks: ...
 
 
 class User(_BaseSchema):
     id: int
-    # rating
+    rating: int = 1500
 
 
 class Move(_BaseSchema):
-    move: str
+    src: str
+    dest: str
+    promo: str
+    # created_at: datetime
 
 
 class ErrorResponse(_BaseSchema):
@@ -119,8 +126,9 @@ class _WaitingGame(_BaseSchema):
 
 class MakeMove(_BaseSchema):
     type: Literal["make_move"]
-    move: str
-    # time
+    src: str
+    dest: str
+    promo: str
 
 
 class FetchGame(_BaseSchema):

@@ -7,7 +7,6 @@ from app.database import service
 
 @pytest.mark.asyncio
 async def test_database_service() -> None:
-    # TODO: separate to unit tests instead of doing it all in one big run?
     user_repo = service.UserService()
     game_repo = service.GameService()
     user_1 = await user_repo.create_or_get_user(1)
@@ -23,20 +22,27 @@ async def test_database_service() -> None:
     )
 
     game = await game_repo.make_move(
-        user_1.id, game.id, schemas.MakeMove(type="make_move", move="e2e4")
+        user_1.id,
+        game.id,
+        schemas.MakeMove(type="make_move", src="e2", dest="e4", promo=""),
     )
     game = await game_repo.make_move(
-        user_2.id, game.id, schemas.MakeMove(type="make_move", move="c7c5")
+        user_2.id,
+        game.id,
+        schemas.MakeMove(type="make_move", src="e7", dest="e5", promo=""),
     )
     game = await game_repo.fetch_game(game.id)
     assert game is not None
-    assert game.stage == Stage.playing
-    assert game.result == None
-    assert game.winner == None
-
     moves = game.moves
-    assert [m.move for m in moves] == ["e2e4", "c7c5"]
-    assert game.fen == "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
+    assert game.stage == Stage.playing
+    assert game.result is None
+    assert game.winner is None
+    assert moves[0].src == "e2"
+    assert moves[0].dest == "e4"
+    assert moves[0].ply == 1
+    assert moves[1].src == "e7"
+    assert moves[1].ply == 2
+    assert game.fen == "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
 
     game = await game_repo.resign(user_2.id, game.id)
     assert game.stage == Stage.ended

@@ -103,9 +103,7 @@ class GameService(BaseService):
 
             game.stage = Stage.playing
 
-            game = chess_service.try_move(
-                game, data.move, white=(user_id == game.white_id)
-            )
+            game = chess_service.try_move(game, data, white=(user_id == game.white_id))
             await session.commit()
             return game
 

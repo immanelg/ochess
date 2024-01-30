@@ -1,11 +1,12 @@
 import chess
 
+from app import schemas
 from app.constants import Color, Result, Stage
 from app.database import models
 from app.exception import ClientError
 
 
-def try_move(game: models.Game, move: str, white: bool) -> models.Game:
+def try_move(game: models.Game, move: schemas.MakeMove, white: bool) -> models.Game:
     """
     Plays move (mutating model) or raises ClientError
     """
@@ -18,7 +19,7 @@ def try_move(game: models.Game, move: str, white: bool) -> models.Game:
 
     board = chess.Board(fen=game.fen)
     try:
-        board.push_uci(move)
+        board.push_uci(move.src + move.dest + move.promo)
     except chess.IllegalMoveError as e:
         raise ClientError(f"illegal move {move}") from e
     except chess.InvalidMoveError as e:
@@ -35,6 +36,9 @@ def try_move(game: models.Game, move: str, white: bool) -> models.Game:
         game.result = Result.draw
 
     game.fen = board.fen()
-    game.moves.append(models.Move(move=move))
+    move_model = models.Move(
+        src=move.src, dest=move.dest, promo=move.promo, ply=length + 1
+    )
+    game.moves.append(move_model)
 
     return game
