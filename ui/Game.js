@@ -16,6 +16,13 @@ import { userId } from "./user";
  */
 
 /**
+ *  @typedef Move
+ *  @property {Key} src
+ *  @property {Key} dest
+ *  @property {string} promo
+ */
+
+/**
  *  @typedef Game
  *  @property {number} id
  *  @property {number?} whiteId
@@ -24,7 +31,7 @@ import { userId } from "./user";
  *  @property {"checkmate" | "draw" | "resign" | "abandoned" | null} result,
  *  @property {Color?} winner,
  *  @property {string} fen,
- *  @property {Array<{move: string}>} moves,
+ *  @property {Move[]} moves,
  */
 
 /**
@@ -145,16 +152,13 @@ export default function Game() {
 
     if (cg === null) throw new Error("cg === null");
 
-    const lastMove = game.moves[game.moves.length - 1]?.move;
-    const lastMoveKeys = lastMove
-      ? /** @type {Key[] | undefined} */ ([
-          lastMove.slice(0, 2),
-          lastMove.slice(2, 4),
-        ])
-      : undefined;
+    
+    const move = game.moves[game.moves.length - 1];
+
     cg.set({
       orientation: myColor() ?? "white",
-      lastMove: lastMoveKeys,
+      // @ts-ignore-line
+      lastMove: [move.src, move.dest], 
       fen: game.fen,
       movable: {
         free: false,
@@ -163,14 +167,16 @@ export default function Game() {
   }
 
   /**
-   * @param {string} orig
-   * @param {string} dest
-   * @param {string?} promo
+   * @param {Key} src
+   * @param {Key} dest
+   * @param {string} promo
    * */
-  function sendMove(orig, dest, promo = null) {
+  function sendMove(src, dest, promo = "") {
     client.sendMsg({
       type: "make_move",
-      move: orig + dest,
+      src,
+      dest,
+      promo,
     });
   }
 
