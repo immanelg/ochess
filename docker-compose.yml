@@ -10,7 +10,7 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ./:/src
+      - ./:/code
     ports:
       - "16000:8000"
     depends_on:
@@ -28,8 +28,6 @@ services:
       - POSTGRES_DB=app
     volumes:
       - app_pg_data:/var/lib/postgresql/data
-      - app_pg_data_backups:/backups
-      - ./scripts/postgres:/scripts
     ports:
       - "5433:5432"
   
