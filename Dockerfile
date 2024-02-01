@@ -18,6 +18,9 @@ RUN pip install -U --no-cache-dir -r /code/requirements.txt
 
 COPY . /code
 
+COPY ./start-dev /start-dev
+RUN chmod +x /start-dev
+
 ENV PYTHONPATH /code
 
-CMD ["uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "80"]
+CMD ["./start-dev"]
