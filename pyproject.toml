@@ -16,22 +16,13 @@ dependencies = [
     "starlette",
     "itsdangerous",
     "chess",
+    "pydantic-settings",
 ]
-requires-python = ">=3.10,<3.12"
+requires-python = ">=3.11,<3.12"
 license = {text = "GPL-3.0"}
 
 [tool.setuptools]
 py-modules = []
-
-[tool.pdm.scripts]
-serve-dev = "uvicorn app.main:app --reload --host 127.0.0.1 --port 8000 {args}"
-db-migration = "alembic revision --autogenerate {args}"
-db-upgrade = "alembic upgrade head"
-db-downgrade = "alembic downgrade {args}"
-lint = "ruff check app/ --fix"
-check = "ruff check app/"
-fmt = "ruff format app/ tests/"
-test = "pytest tests/"
 
 [tool.pdm.dev-dependencies]
 test = [
