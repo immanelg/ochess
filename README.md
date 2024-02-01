@@ -24,6 +24,8 @@ make build
 make up
 ```
 
+The website will be available at http://127.0.0.1:16000/.
+
 Optionally, do `pre-commit install`.
 
 See [Makefile](Makefile) for other available commands.
