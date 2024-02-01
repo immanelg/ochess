@@ -8,6 +8,7 @@ import About from "./About";
 import Game from "./Game";
 import Lobby from "./Lobby";
 import Watch from "./Watch";
+import Players from "./Players";
 
 const root = document.querySelector("#app");
 
@@ -16,4 +17,5 @@ m.route(root, "/", {
   "/game/:gameId": Game,
   "/watch": Watch,
   "/about": About,
+  "/players": Players,
 });

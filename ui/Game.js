@@ -56,7 +56,7 @@ export default function Game() {
   client.onConnect = () => {
     client.sendMsg({
       type: "auth",
-      userId: userId,
+      userId,
     });
     client.sendMsg({
       type: "reconnect",
@@ -94,6 +94,7 @@ export default function Game() {
 
   function maybeMove() {
     if (keystack.length === 4 && myColor() === whichTurn()) {
+      // @ts-ignore
       sendMove(keystack.slice(0, 2).join(""), keystack.slice(2, 4).join(""));
       keystack = [];
     }
@@ -157,7 +158,7 @@ export default function Game() {
 
     cg.set({
       orientation: myColor() ?? "white",
-      // @ts-ignore-line
+      // @ts-ignore
       lastMove: [move.src, move.dest], 
       fen: game.fen,
       movable: {
@@ -186,7 +187,7 @@ export default function Game() {
     });
   }
 
-  function init() {
+  function oncreate() {
     const el = /** @type {HTMLInputElement} */ (
       document.querySelector(".cg-wrap")
     );
@@ -205,9 +206,7 @@ export default function Game() {
         ".center",
         m(
           "section.blue.merida",
-          m("div.cg-wrap", {
-            oncreate: init,
-          }),
+          m("div.cg-wrap", { oncreate }),
         ),
       ),
       m("p", keystack),
