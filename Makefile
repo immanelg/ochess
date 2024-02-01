@@ -14,19 +14,19 @@ logs:
 	docker-compose logs -f
 
 db-genmigration:
-	docker compose exec app alembic revision --autogenerate 
+	docker-compose exec app alembic revision --autogenerate 
 
 db-upgrade:
-	docker compose exec app alembic upgrade head
+	docker-compose exec app alembic upgrade head
 
 db-downgrade:
-	docker compose exec app alembic downgrade {{args}}
+	docker-compose exec app alembic downgrade {{args}}
 
 fmt:
-	docker compose exec app ruff format src
+	docker-compose exec app ruff format src
 
 lint:
-	docker compose exec app ruff --fix src
+	docker-compose exec app ruff --fix src
 
 lint-fmt: format lint
 
