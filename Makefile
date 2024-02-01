@@ -1,5 +1,5 @@
 up:
-	docker-compose up 
+	docker-compose up -d
 
 kill:
 	docker-compose kill
