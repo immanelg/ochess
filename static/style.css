@@ -1,83 +1,84 @@
 * {
-	padding: 0;
-	margin: 0;
+  padding: 0;
+  margin: 0;
 }
 
 body {
-	margin: 0 5%;
-	font-family: sans-serif;
-	font-size: 13pt;
-	background: #191b18;
-	color: #cbcfc9;
+  margin: 0 5%;
+  font-family: sans-serif;
+  font-size: 13pt;
+  background: #191b18;
+  color: #cbcfc9;
 }
 
 nav {
-	display: flex;
-	align-items: center;
-	margin: 10px;
-	padding: 5px 10px;
-	justify-content: space-between;
-	background-color: #252924;
-	border-radius: 5px;
+  display: flex;
+  align-items: center;
+  margin: 10px;
+  padding: 5px 10px;
+  justify-content: space-between;
+  background-color: #252924;
+  border-radius: 5px;
 }
 
 nav ul {
-	display: flex;
-	list-style: none;
+  display: flex;
+  list-style: none;
 }
 
 nav h1 {
-	font-size: 16pt;
+  font-size: 16pt;
 }
 
 nav li a {
-	display: block;
-	padding: 8px;
-	text-decoration: none;
-	color: #cbcfc9;
+  display: block;
+  padding: 8px;
+  text-decoration: none;
+  color: #cbcfc9;
 }
 
 nav a:hover {
-    background-color: rgb(55, 75, 65);
-    cursor: pointer;
+  background-color: rgb(55, 75, 65);
+  cursor: pointer;
 }
 
 table.invites {
-    background: #292e28;
-    text-align: center;
-	margin: 5px auto;
-    border-collapse: collapse;
-    width: 80%;
-    border-radius: 5px;
-	overflow: hidden;
+  background: #292e28;
+  text-align: center;
+  margin: 5px auto;
+  border-collapse: collapse;
+  width: 80%;
+  border-radius: 5px;
+  overflow: hidden;
 }
 
-table.invites th, td {
-	padding: 8px;
+table.invites th,
+td {
+  padding: 8px;
 }
 
 thead tr:hover {
-    background-color: rgb(49, 62, 54);
+  background-color: rgb(49, 62, 54);
 }
 
 tbody tr:hover {
-    background-color: rgb(55, 75, 60);
-    cursor: pointer;
+  background-color: rgb(55, 75, 60);
+  cursor: pointer;
 }
 
 button {
-    background-color: rgb(55, 100, 65);
-    border: none;
-	color: #cbcfc9;
-    padding: 15px 32px;
-	margin: 10px;
-    text-decoration: none;
-	border-radius: 15px;
+  background-color: rgb(55, 100, 65);
+  border: none;
+  color: #cbcfc9;
+  padding: 15px 32px;
+  margin: 10px;
+  text-decoration: none;
+  border-radius: 15px;
 }
 
 button:hover {
-    background-color: rgb(55, 120, 75);
-    cursor: pointer;
+  background-color: rgb(55, 120, 75);
+  cursor: pointer;
 }
 
 .center {
@@ -85,4 +86,3 @@ button:hover {
   align-items: center;
   justify-content: center;
 }
-
