@@ -22,6 +22,7 @@ cp example.env .env
 docker network create app_main
 make build
 make up
+make db-upgrade
 ```
 
 The website will be available at http://127.0.0.1:16000/.
