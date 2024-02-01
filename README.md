@@ -26,15 +26,7 @@ make up
 
 Optionally, do `pre-commit install`.
 
-
-Available commands:
-```bash
-# Start the server (or docker-compose up)
-make up
-
-# upgrade postgres db to the latest version
-make db-upgrade
-```
+See [Makefile](Makefile) for other available commands.
 
 ## Features
 - Create/cancel/accept/list games in the lobby.
