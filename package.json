@@ -10,7 +10,7 @@
     "test": "jest",
     "build": "esbuild ui/index.js --bundle --outfile=static/bundle.js",
     "watch": "esbuild ui/index.js --bundle --outfile=static/bundle.js --watch",
-    "fmt": "npx prettier ui/ --write"
+    "fmt": "prettier ui/ --write"
   },
   "keywords": [
     "chess"
