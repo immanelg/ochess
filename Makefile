@@ -20,15 +20,16 @@ db-upgrade:
 	docker-compose exec app alembic upgrade head
 
 db-downgrade:
-	docker-compose exec app alembic downgrade {{args}}
+	docker-compose exec app alembic downgrade -1 
 
 fmt:
-	docker-compose exec app ruff format src
+	docker-compose exec app ruff format
 
 lint:
-	docker-compose exec app ruff --fix src
+	docker-compose exec app ruff --fix
 
-lint-fmt: format lint
+check:
+	docker-compose exec app ruff 
 
 test:
 	docker-compose exec app pytest tests/
