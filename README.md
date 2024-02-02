@@ -25,7 +25,7 @@ make up
 make db-upgrade
 ```
 
-The website will be available at http://127.0.0.1:16000/.
+To build JS bundle, run `make ui-build`. The website will be available at http://127.0.0.1:16000/.
 
 Optionally, do `pre-commit install`.
 
