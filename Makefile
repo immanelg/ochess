@@ -36,15 +36,3 @@ test:
 
 pre-commit:
 	pre-commit run --all-files
-
-ui-build:
-	npm run build
-
-ui-build-watch:
-	npm run watch
-
-ui-fmt:
-	npm run fmt
-
-ui-test:
-	npm run test

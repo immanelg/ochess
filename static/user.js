@@ -1,6 +1,7 @@
 // @ts-check
 
-// Yes. I know. we don't care about security right now. I will do OAuth2 some day, not today.
+// fake authentication
+
 /** @type {number} */
 export let userId;
 

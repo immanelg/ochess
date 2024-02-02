@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block body %}
+    <section class="blue merida">
+        <div class="cg-wrap"></div>
+    </section>
+    <p id="game-info">...</p>
+    <p id="keystack"></p>
+    <button id="resign" type="button">resign</button>
+    <button id="offer draw" type="button">offer draw</button>
+
+    <script type=module src="{{url_for('static', path='game.js')}}"></script>
+{% endblock %}

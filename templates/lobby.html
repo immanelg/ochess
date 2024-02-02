@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block body %}
+    <table class="invites">
+        <thead>
+            <tr>
+                <th>color</th>
+                <th>player</th>
+                <th>game ID</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <button id="create-game" type="button">create game</button>
+    <button id="create-challenge" type="button">create challege</button>
+    <script type="module" src="{{ url_for('static', path='lobby.js') }}"></script>
+{% endblock %}

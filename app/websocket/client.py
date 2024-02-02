@@ -4,6 +4,7 @@ from typing import Any, Awaitable, Callable, TypeAlias
 from starlette.websockets import WebSocket
 
 from app import schemas
+from app.resources import broadcast
 from app.database.service import UserService
 from app.exception import ClientError
 from app.logging import logger

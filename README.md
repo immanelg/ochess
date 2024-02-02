@@ -4,10 +4,10 @@
 
 ## Installation
 ### Requirements
-- Python 3.11.
-- Docker && Docker Compose.
-- Node JS and npm (frontend builds).
+- Python 3.11 and pdm.
+- Docker.
 - GNU Make (optional).
+- Node JS (optional).
 
 ### Setup development environment
 
@@ -25,7 +25,7 @@ make up
 make db-upgrade
 ```
 
-To build JS bundle, run `make ui-build`. The website will be available at http://127.0.0.1:16000/.
+You should be able to see the demo website at http://127.0.0.1:16000/.
 
 Optionally, do `pre-commit install`.
 
@@ -37,16 +37,15 @@ See [Makefile](Makefile) for other available commands.
 
 ## TODO
 - Do more refactoring on the backend.
-- CI/CD, Docker, etc.
 - Expire old invites after some time of user being offline.
 - Show online count and spectator count. Also, chat messages?
 - Third-party authentication.
 - ELO ratings.
 - Clocks.
+- TV.
 - More events: claim_draw (check claimability on each move and store it in the db; also check for more types of automatic draws), offer_draw, rematch (just make a new private game inside a match). 
 - Use Redis backend for pub/sub.
 - HTTP API.
 - Daily games.
 - Tournaments, puzzles, etc.
-- Make front-end client not proof-of-concept, but a little bit better.
-
+- Create Vue.js frontend.

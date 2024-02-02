@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="stylesheet" href="{{ url_for('static', path='chessground.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', path='theme.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+        <meta id="data" data-gameid="{{ gameid }}">
+        <title>ochess</title>
+    </head>
+    <body >
+        <nav>
+            <h1>ochess</h1>
+            <ul>
+                <li><a href="/lobby">lobby</a></li>
+                <li><a href="/watch">watch</a></li>
+                <li><a href="/players">players</a></li>
+                <li><a href="/about">about</a></li>
+            </ul>
+        </nav>
+        {% block body %}
+        {% endblock %}
+    </body>
+</html>

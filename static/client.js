@@ -1,16 +1,16 @@
 //@ts-check
+
 /**
  * @property {string} baseurl
  * @property {WebSocket} ws
  */
-export class OchessWebSocket {
+export class StrongSocket {
   /**
    * @param {string} url
    */
   constructor(url) {
     this.baseurl = `ws://${window.location.host}/ws/`;
     this.url = this.baseurl + url;
-    window["ochessSocket"] = this;
   }
 
   connect() {
