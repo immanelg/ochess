@@ -63,8 +63,8 @@ def _get_channel(socket: WebSocket) -> Any:
         try:
             game_id = int(game_id)
         except ValueError:
-            logger.warn(
-                "attempt socket to connect invalid channel game_id=%s: %s",
+            logger.warning(
+                "socket tried to connect to invalid channel game_id=%s: %s",
                 game_id,
                 socket.client,
             )
